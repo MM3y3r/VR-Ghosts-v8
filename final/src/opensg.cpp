@@ -34,6 +34,7 @@ OSG_USING_NAMESPACE // activate the OpenSG namespace
 SimpleSceneManagerRefPtr mgr; // the SimpleSceneManager to manage applications
 NodeRecPtr beachTrans;
 
+
 //------------------------------------------------------------------------------
 // Forward Declarations
 //------------------------------------------------------------------------------
@@ -44,9 +45,11 @@ int setupGLUT(int *argc, char *argv[]);
 void cleanup();
 
 NodeTransitPtr createScenegraph() {
+	// CREATE ROOT SCENE GRAPH
 	NodeRecPtr root = Node::create();
 	root->setCore(Group::create());
 
+	// CREATE SCENE BOX
 	NodeRecPtr boxChild = makeBox(5,4,4,1,1,1);
 	NodeRecPtr beach = makePlane(30, 30, 1, 1);
 
