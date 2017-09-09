@@ -230,6 +230,8 @@ int main(int argc, char **argv) {
 		//bkg->addLine(Color3f(0.7f, 0.7f, 0.8f), 0);
 		//bkg->addLine(Color3f(0.0f, 0.1f, 0.3f), 1);
 
+		// ICH BIN EIN TEST
+
 		gwin->getPort(0)->setBackground(imBkg);
 	}
 	glutMainLoop();
