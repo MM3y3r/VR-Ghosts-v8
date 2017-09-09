@@ -21,7 +21,7 @@
 #include <OpenSG/OSGPointLight.h>
 #include <OpenSG/OSGSpotLight.h>
 #include <ctime>
-
+//test
 #ifdef _MSC_VER
 # pragma warning(pop)
 #endif
