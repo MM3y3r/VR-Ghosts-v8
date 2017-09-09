@@ -33,6 +33,8 @@ OSG_USING_NAMESPACE // activate the OpenSG namespace
 //------------------------------------------------------------------------------
 SimpleSceneManagerRefPtr mgr; // the SimpleSceneManager to manage applications
 NodeRecPtr beachTrans;
+NodeRecPtr trans;
+//const float time = 1000.f * std::clock() / CLOCKS_PER_SEC;
 
 
 //------------------------------------------------------------------------------
@@ -85,8 +87,13 @@ NodeTransitPtr createScenegraph() {
 	beachTrans->setCore(ct);
 	beachTrans->addChild(beach);
 
+	trans = Node::create();
+	trans->setCore(ct);
+	trans->addChild(boxChild);
+
 	// put the nodes in the scene again
-	root->addChild(beachTrans);
+	//root->addChild(beachTrans);
+	root->addChild(trans);
 	root->addChild(sunTrans);
 	root->subChild(sunTrans);
 
@@ -245,10 +252,15 @@ void display() {
 	const float time = 1000.f * std::clock() / CLOCKS_PER_SEC;
 
 	ComponentTransformRecPtr bt = dynamic_cast<ComponentTransform*>(beachTrans->getCore());
+	ComponentTransformRecPtr zt = dynamic_cast<ComponentTransform*>(trans->getCore());
 
 	//bt->setTranslation(Vec3f(10,5,0));
-	bt->setRotation(Quaternion(Vec3f(1,0,0),osgDegree2Rad(270)+0.005f*time));
+	//bt->setRotation(Quaternion(Vec3f(1,0,0),osgDegree2Rad(270)+0.001f*time));
 	//bt->setScale(Vec3f(0.001,0.001,0.001));
+
+	zt->setTranslation(Vec3f(10,5,0.001f*time));
+	//zt->setRotation(Quaternion(Vec3f(1,0,0),osgDegree2Rad(270)+0.005f*time));
+	//zt->setScale(Vec3f(0.001,0.001,0.001));
 
 	//updateMesh(time);
 	commitChanges(); //make sure the changes are distributed over the containers
@@ -308,5 +320,6 @@ int setupGLUT(int *argc, char *argv[]) {
 
 void cleanup() {
 	beachTrans = NULL;
+	trans = NULL;
 	mgr = NULL;
 }
