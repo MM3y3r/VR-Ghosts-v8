@@ -1,0 +1,22 @@
+# Blender3D MTL File:
+# Material Count: 2
+newmtl bfvd__LEAF.JPG
+Ns 96.078431
+Ka 0.000000 0.000000 0.000000
+Kd 0.398431 0.398431 0.398431
+Ks 0.500000 0.500000 0.500000
+d 1.000000
+illum 2
+map_Kd leaf.jpg
+
+
+newmtl s_BARK.JPG
+Ns 96.078431
+Ka 0.000000 0.000000 0.000000
+Kd 0.398431 0.398431 0.398431
+Ks 0.500000 0.500000 0.500000
+d 1.000000
+illum 2
+map_Kd bark.jpg
+
+

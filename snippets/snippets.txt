@@ -1,0 +1,335 @@
+==============================================================================
+Step 1
+==============================================================================
+
+/--------------------------------------------------------
+| 1.1 INSERT: Let's add two child nodes
+---------------------------------------------------------
+	NodeRecPtr boxChild = makeBox(5,4,4,1,1,1);
+	NodeRecPtr beach = makePlane(30, 30, 1, 1);
+
+	GeometryRecPtr sunGeo = makeSphereGeo(2, 3);
+	NodeRecPtr sunChild = Node::create();
+	sunChild->setCore(sunGeo);
+
+	root->addChild(sunChild);
+	root->addChild(boxChild);
+	root->addChild(beach);
+
+\---------------------------------------------------------
+
+/--------------------------------------------------------
+| 1.2 INSERT: includes
+---------------------------------------------------------
+#include <OpenSG/OSGSimpleGeometry.h>
+
+\---------------------------------------------------------
+
+
+
+
+==============================================================================
+Step 2
+==============================================================================
+
+/--------------------------------------------------------
+| 2.1 INSERT: Let's transform the nodes
+---------------------------------------------------------
+	//decouple the nodes to be shifted in hierarchy from the scene
+	root->subChild(sunChild);
+	root->subChild(beach);
+
+	TransformRecPtr sunTransCore = Transform::create();
+	Matrix sunMatrix;
+
+	// Setting up the matrix
+	sunMatrix.setIdentity();
+	sunMatrix.setTranslate(0,20,0);
+	sunTransCore->setMatrix(sunMatrix); // Adding the Matrix to the core
+
+	// Setting up the node
+	NodeRecPtr sunTrans = makeNodeFor(sunTransCore);
+	sunTrans->addChild(sunChild);
+
+	ComponentTransformRecPtr ct = ComponentTransform::create();
+	ct->setTranslation(Vec3f(0,-2,0));
+	ct->setRotation(Quaternion(Vec3f(1,0,0),osgDegree2Rad(90)));
+
+	beachTrans = Node::create();
+	beachTrans->setCore(ct);
+	beachTrans->addChild(beach);
+
+	// put the nodes in the scene again
+	root->addChild(beachTrans);
+	root->addChild(sunTrans);
+
+
+\---------------------------------------------------------
+
+/--------------------------------------------------------
+| 2.2 INSERT: includes
+---------------------------------------------------------
+#include <OpenSG/OSGComponentTransform.h>
+
+\---------------------------------------------------------
+
+
+
+
+==============================================================================
+Step 3
+==============================================================================
+
+/--------------------------------------------------------
+| 3.1 INSERT: How about adding some color
+---------------------------------------------------------
+	root->subChild(sunTrans);
+
+	SimpleMaterialRecPtr sunMat = SimpleMaterial::create();
+	sunMat->setDiffuse(Color3f(1,0.8f,0));
+	sunMat->setAmbient(Color3f(0.8f, 0.2f, 0.2f));
+
+	MaterialGroupRecPtr sunMgCore = MaterialGroup::create();
+	sunMgCore->setMaterial(sunMat);
+
+	NodeRecPtr sunMg = Node::create();
+
+	sunMg->setCore(sunMgCore);
+	sunMg->addChild(sunTrans);
+
+	root->addChild(sunMg);
+
+	SimpleMaterialRecPtr boxMat = SimpleMaterial::create();
+
+	boxMat->setDiffuse(Color3f(1,0.2f,0.1f));
+	boxMat->setAmbient(Color3f(0.8f, 0.2f, 0.2f));
+	boxMat->setTransparency(0.25);
+	//boxMat->setLit(false);
+
+	GeometryRecPtr boxGeo = dynamic_cast<Geometry*>(boxChild->getCore());
+	boxGeo->setMaterial(boxMat);
+
+
+\---------------------------------------------------------
+
+/--------------------------------------------------------
+| 3.2 INSERT: includes
+---------------------------------------------------------
+#include <OpenSG/OSGMaterialGroup.h>
+#include <OpenSG/OSGImage.h>
+#include <OpenSG/OSGSimpleTexturedMaterial.h>
+
+\---------------------------------------------------------
+
+
+
+
+==============================================================================
+Step 4
+==============================================================================
+
+/--------------------------------------------------------
+| 4.1 INSERT: Advanced Transformations and textures
+---------------------------------------------------------
+	ImageRecPtr image = Image::create();
+	// sand taken from http://www.filterforge.com/filters/720.jpg
+	image->read("models/sand.jpg");
+
+	//now we create the texture that will hold the image
+	SimpleTexturedMaterialRecPtr tex = SimpleTexturedMaterial::create();
+	tex->setImage(image);
+
+	//now assign the fresh texture to the geometry
+	GeometryRecPtr beachGeo = dynamic_cast<Geometry*>(beach->getCore());
+	beachGeo->setMaterial(tex);
+
+\---------------------------------------------------------
+
+/--------------------------------------------------------
+| 4.2 INSERT: includes
+---------------------------------------------------------
+#include <OpenSG/OSGSceneFileHandler.h>
+
+\---------------------------------------------------------
+
+
+
+
+==============================================================================
+Step 5
+==============================================================================
+
+/--------------------------------------------------------
+| 5.1 INSERT: Loading and duplicating models
+---------------------------------------------------------
+	//model taken from http://storage3d.com/
+	NodeRecPtr palmTree = SceneFileHandler::the()->read("models/palm.3ds");
+
+	ComponentTransformRecPtr palmCT = ComponentTransform::create();
+	palmCT->setTranslation(Vec3f(12,-1,0));
+	palmCT->setRotation(Quaternion(Vec3f(0,1,0),osgDegree2Rad(45)));
+	palmCT->setScale(Vec3f(10.f,10.f,10.f));
+
+	NodeRecPtr palmTrans = makeNodeFor(palmCT);
+	palmTrans->addChild(palmTree);
+
+	root->addChild(palmTrans);
+
+	NodeRecPtr palmTree2 = OSG::deepCloneTree(palmTrans);
+	ComponentTransformRecPtr palmCT2 = dynamic_cast<ComponentTransform*>(palmTree2->getCore());
+
+	palmCT2->setTranslation(Vec3f(10,-1,5));
+	palmCT->setRotation(Quaternion(Vec3f(1,0,0),osgDegree2Rad(0)));
+	palmCT->setScale(Vec3f(10.f,10.f,10.f));
+
+	root->addChild(palmTree2);
+
+\---------------------------------------------------------
+
+
+
+
+==============================================================================
+Step 6
+==============================================================================
+
+/--------------------------------------------------------
+| 6.1 INSERT: Playing with background images
+---------------------------------------------------------
+		ImageRecPtr backimage = Image::create();
+		backimage->read("models/tropical-beach.jpg");
+
+		TextureObjChunkRecPtr bkgTex = TextureObjChunk::create();
+		bkgTex->setImage(backimage);
+		bkgTex->setScale(false);
+		TextureBackgroundRecPtr imBkg = TextureBackground::create();
+		imBkg->setTexture(bkgTex);
+		imBkg->setColor(Color4f(1.0,1.0,1.0,0.0f));
+
+		// alternatively use a gradient background
+		//GradientBackgroundRecPtr bkg = GradientBackground::create();
+		//bkg->addLine(Color3f(0.7f, 0.7f, 0.8f), 0);
+		//bkg->addLine(Color3f(0.0f, 0.1f, 0.3f), 1);
+
+		gwin->getPort(0)->setBackground(imBkg);
+
+\---------------------------------------------------------
+
+/--------------------------------------------------------
+| 6.2 INSERT: includes
+---------------------------------------------------------
+#include <OpenSG/OSGTextureBackground.h>
+#include <OpenSG/OSGGradientBackground.h>
+
+\---------------------------------------------------------
+
+
+
+
+==============================================================================
+Step 7
+==============================================================================
+
+/--------------------------------------------------------
+| 7.1 INSERT: Light Sources
+---------------------------------------------------------
+	PointLightRecPtr sunLight = PointLight::create();
+	//sunLight->setAttenuation(1,0,2);
+
+	//color information
+	sunLight->setDiffuse(Color4f(1,1,1,1));
+	sunLight->setAmbient(Color4f(0.2f,0.2f,0.2f,1));
+	sunLight->setSpecular(Color4f(1,1,1,1));
+
+	sunLight->setBeacon(sunChild); //attach to the sun node use this node as position beacon
+
+	root->setCore(sunLight);
+
+	DirectionalLightRecPtr dirLight = DirectionalLight::create();
+	dirLight->setDirection(1,1,-1);
+
+	//color information
+	dirLight->setDiffuse(Color4f(1,1,1,1));
+	dirLight->setAmbient(Color4f(0.2f,0.2f,0.2f,1));
+	dirLight->setSpecular(Color4f(1,1,1,1));
+
+
+	//wrap the root, cause only nodes below the lights will be lit
+	NodeRecPtr ueberroot = makeNodeFor(dirLight);
+	ueberroot->addChild(root);
+
+	root = ueberroot;
+
+\---------------------------------------------------------
+
+/--------------------------------------------------------
+| 7.2 INSERT: Light Sources - No Headlight
+---------------------------------------------------------
+	mgr->setHeadlight(false);
+
+\---------------------------------------------------------
+
+/--------------------------------------------------------
+| 7.3 INSERT: includes
+---------------------------------------------------------
+#include <OpenSG/OSGPointLight.h>
+#include <OpenSG/OSGSpotLight.h>
+#include <ctime>
+
+\---------------------------------------------------------
+
+
+
+
+==============================================================================
+Step 8
+==============================================================================
+
+/--------------------------------------------------------
+| 8.1 INSERT: Motion
+---------------------------------------------------------
+	const float time = 1000.f * std::clock() / CLOCKS_PER_SEC;
+
+	ComponentTransformRecPtr bt = dynamic_cast<ComponentTransform*>(beachTrans->getCore());
+
+	//bt->setTranslation(Vec3f(10,5,0));
+	bt->setRotation(Quaternion(Vec3f(1,0,0),osgDegree2Rad(270)+0.001f*time));
+	//bt->setScale(Vec3f(0.001,0.001,0.001));
+
+	//updateMesh(time);
+
+\---------------------------------------------------------
+
+
+
+
+==============================================================================
+Step 9
+==============================================================================
+
+/--------------------------------------------------------
+| 9.1 INSERT: Traversal
+---------------------------------------------------------
+Action::ResultE enter(Node* node){
+	if(node->getCore()->getType().isDerivedFrom(ComponentTransform::getClassType()))
+		std::cout << "Enter node : " << node << std::endl;
+	return Action::Continue;
+}
+
+Action::ResultE leave(Node* node, Action::ResultE result){
+//  std::cout << "Leaving node: " << node << "with code: " << result << std::endl;
+	return result;
+}
+
+\---------------------------------------------------------
+
+/--------------------------------------------------------
+| 9.2 INSERT: Traversal
+---------------------------------------------------------
+	traverse(root,enter,leave);
+
+\---------------------------------------------------------
+
+
+
+
