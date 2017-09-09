@@ -236,6 +236,7 @@ int main(int argc, char **argv) {
 }
 
 void display() {
+	// TEST CHANGE
 	const float time = 1000.f * std::clock() / CLOCKS_PER_SEC;
 
 	ComponentTransformRecPtr bt = dynamic_cast<ComponentTransform*>(beachTrans->getCore());
