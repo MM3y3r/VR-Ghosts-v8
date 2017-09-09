@@ -238,13 +238,13 @@ int main(int argc, char **argv) {
 }
 
 void display() {
-	// TEST CHANGE
+	// definition time
 	const float time = 1000.f * std::clock() / CLOCKS_PER_SEC;
 
 	ComponentTransformRecPtr bt = dynamic_cast<ComponentTransform*>(beachTrans->getCore());
 
 	//bt->setTranslation(Vec3f(10,5,0));
-	bt->setRotation(Quaternion(Vec3f(1,0,0),osgDegree2Rad(270)+0.001f*time));
+	bt->setRotation(Quaternion(Vec3f(1,0,0),osgDegree2Rad(270)+0.005f*time));
 	//bt->setScale(Vec3f(0.001,0.001,0.001));
 
 	//updateMesh(time);
