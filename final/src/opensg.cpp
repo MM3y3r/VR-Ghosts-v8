@@ -6,10 +6,10 @@
 # pragma warning(disable:4251 4275 4290 4996 4231 4244)
 #endif
 // OpenSG includes
-#include <OpenSG/OSGGLUT.h>
-#include <OpenSG/OSGConfig.h>
-#include <OpenSG/OSGGLUTWindow.h>
-#include <OpenSG/OSGSimpleSceneManager.h>
+#include <OpenSG/OSGGLUT.h>					//für GLUT
+#include <OpenSG/OSGConfig.h>				//für GLUT
+#include <OpenSG/OSGGLUTWindow.h>			//für GLUT
+#include <OpenSG/OSGSimpleSceneManager.h>	//für GLUT
 #include <OpenSG/OSGSimpleGeometry.h>
 #include <OpenSG/OSGComponentTransform.h>
 #include <OpenSG/OSGMaterialGroup.h>
@@ -48,18 +48,26 @@ void cleanup();
 
 NodeTransitPtr createScenegraph() {
 	// CREATE ROOT SCENE GRAPH
-	NodeRecPtr root = Node::create();
-	root->setCore(Group::create());
+	NodeRecPtr root = Node::create(); //Generation of objects via create() generates the object internally and returns a pointer to the object (RecPtr)
+	root->setCore(Group::create()); // A first node with a group core is created - this is achieved by creating an anonymous group core and setting it in the node
 
-	// CREATE SCENE BOX
-	NodeRecPtr boxChild = makeBox(5,4,4,1,1,1);
+	//• NodeRecPtr		-> General smart pointer used to create a node
+	//• NodeTransitPtr	-> Used for passing a node pointer out of the current context, typically used when a field container is created inside a function and should be returned
+	//• commitChanges	-> Commit the changes before rendering, fields become synchronise over all rendering nodes
+	//• Attachment		-> Field containers can have attachments (user data) Typically available with nodes and node cores Attachments have to be derived from the class attachment
+
+	// CREATE SCENE BOX 
+	// (Hier wurden zwei Möglichkeiten präsentiert ->	1.makeirgendwas (we create a node containing a geometry core representing a box as well as a node containing a geometry)
+	//													2.makeirgendwasGeo (we create a geometry core defining a sphere and an additional empty node To fill the empty node we have to set the geometry core inside this nodecore representing a plane)
+
+	NodeRecPtr boxChild = makeBox(5,5,5,1,1,1);		//	1.Node with core 
 	NodeRecPtr beach = makePlane(30, 30, 1, 1);
 
-	GeometryRecPtr sunGeo = makeSphereGeo(2, 3);
-	NodeRecPtr sunChild = Node::create();
-	sunChild->setCore(sunGeo);
+	GeometryRecPtr sunGeo = makeSphereGeo(2, 3);	//	2.Only Core (GEO)
+	NodeRecPtr sunChild = Node::create();			//	2.empty node
+	sunChild->setCore(sunGeo);						//	2.placing core in node
 
-	root->addChild(sunChild);
+	root->addChild(sunChild);						//	Die drei Nodes werden an die Root gebunden
 	root->addChild(boxChild);
 	root->addChild(beach);
 
@@ -187,7 +195,7 @@ NodeTransitPtr createScenegraph() {
 	ueberroot->addChild(root);
 
 	root = ueberroot;
-	return NodeTransitPtr(root);
+	return NodeTransitPtr(root); // We need such a transit pointer to pass the node pointer from the scene graph out of the function to main
 }
 
 Action::ResultE enter(Node* node){
@@ -261,7 +269,7 @@ void display() {
 	zt->setTranslation(Vec3f(10,5,0.001f*time));
 	//zt->setRotation(Quaternion(Vec3f(1,0,0),osgDegree2Rad(270)+0.005f*time));
 	//zt->setScale(Vec3f(0.001,0.001,0.001));
-
+	
 	//updateMesh(time);
 	commitChanges(); //make sure the changes are distributed over the containers
 	mgr->redraw(); // redraw the window
