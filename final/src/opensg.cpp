@@ -34,6 +34,7 @@ OSG_USING_NAMESPACE // activate the OpenSG namespace
 SimpleSceneManagerRefPtr mgr; // the SimpleSceneManager to manage applications
 NodeRecPtr beachTrans;
 NodeRecPtr trans;
+NodeRecPtr utrans;
 //const float time = 1000.f * std::clock() / CLOCKS_PER_SEC;
 
 
@@ -62,6 +63,7 @@ NodeTransitPtr createScenegraph() {
 
 	NodeRecPtr boxChild = makeBox(5,5,5,1,1,1);		//	1.Node with core 
 	NodeRecPtr beach = makePlane(30, 30, 1, 1);
+	NodeRecPtr ghost = makeSphere(2,3);	//Für geist
 
 	GeometryRecPtr sunGeo = makeSphereGeo(2, 3);	//	2.Only Core (GEO)
 	NodeRecPtr sunChild = Node::create();			//	2.empty node
@@ -70,10 +72,12 @@ NodeTransitPtr createScenegraph() {
 	root->addChild(sunChild);						//	Die drei Nodes werden an die Root gebunden
 	root->addChild(boxChild);
 	root->addChild(beach);
+	root->addChild(ghost);							//Für geist
 
 	//decouple the nodes to be shifted in hierarchy from the scene
 	root->subChild(sunChild);
 	root->subChild(beach);
+	root->subChild(ghost);
 
 	TransformRecPtr sunTransCore = Transform::create();
 	Matrix sunMatrix;
@@ -81,30 +85,43 @@ NodeTransitPtr createScenegraph() {
 	// Setting up the matrix
 	sunMatrix.setIdentity();
 	sunMatrix.setTranslate(0,20,0);
-	sunTransCore->setMatrix(sunMatrix); // Adding the Matrix to the core
+	sunTransCore->setMatrix(sunMatrix); // Adding the Matrix to the core (The matrix is set in the core, the core is set in a node, and all the child nodes are transformed the way described in the matrix)
 
 	// Setting up the node
 	NodeRecPtr sunTrans = makeNodeFor(sunTransCore);
 	sunTrans->addChild(sunChild);
 
 	ComponentTransformRecPtr ct = ComponentTransform::create();
-	ct->setTranslation(Vec3f(0,-2,0));
-	ct->setRotation(Quaternion(Vec3f(1,0,0),osgDegree2Rad(90)));
+	//ct->setTranslation(Vec3f(1,2,3));
+	//ct->setRotation(Quaternion(Vec3f(1,0,0),osgDegree2Rad(90)));
 
 	beachTrans = Node::create();
 	beachTrans->setCore(ct);
 	beachTrans->addChild(beach);
 
-	trans = Node::create();
-	trans->setCore(ct);
-	trans->addChild(boxChild);
+	// für die boxchild translation
+	trans = Node::create();		//knoten erstellt
+	trans->setCore(ct);			//kern mit ct wird in knoten gesetzt
+	trans->addChild(boxChild);  //Childknoten wir an den transformationsknoten gehängt
+	
+	// translation zum üben geist
+	
+	//utrans = Node::create();		
+	//utrans->setCore(ct);			
+	//utrans->addChild(ghost);		
 
 	// put the nodes in the scene again
 	//root->addChild(beachTrans);
-	root->addChild(trans);
+
+	root->addChild(trans); //an den root-knoten wird der trans-knoten gehangen, welcher den CT-Kern ernthält. an den Trans-Knoten wird wiederum der boxchild knoten gehangen, welcher wiederum den geometry-kern enthält(Siehe zeile 63).
+
+	root->addChild(utrans);//übungstranslationsknoten an welchem geist hängt
+	//root->subChild(utrans);
+
 	root->addChild(sunTrans);
 	root->subChild(sunTrans);
 
+	// Hier: material erstellen, kern machen, knoten erstellen, knoten kern geben, knoten child geben
 	SimpleMaterialRecPtr sunMat = SimpleMaterial::create();
 	sunMat->setDiffuse(Color3f(1,0.8f,0));
 	sunMat->setAmbient(Color3f(0.8f, 0.2f, 0.2f));
@@ -116,9 +133,28 @@ NodeTransitPtr createScenegraph() {
 
 	sunMg->setCore(sunMgCore);
 	sunMg->addChild(sunTrans);
+	//sunMg->addChild(utrans);
 
 	root->addChild(sunMg);
 
+	// Probematerial für geist
+
+	SimpleMaterialRecPtr ghostMat = SimpleMaterial::create();
+	ghostMat->setDiffuse(Color3f(1,0.8f,0));
+	ghostMat->setAmbient(Color3f(0.8f, 0.2f, 0.2f));
+
+	MaterialGroupRecPtr ghostMgCore = MaterialGroup::create();
+	ghostMgCore->setMaterial(ghostMat);
+
+	NodeRecPtr ghostMg = Node::create();
+
+	ghostMg->setCore(ghostMgCore);
+	ghostMg->addChild(ghost);
+
+
+	root->addChild(ghostMg);
+
+	// Hier: geometry raus nehmen mit dynamic cast zeile 149
 	SimpleMaterialRecPtr boxMat = SimpleMaterial::create();
 
 	boxMat->setDiffuse(Color3f(1,0.2f,0.1f));
@@ -262,6 +298,7 @@ void display() {
 	ComponentTransformRecPtr bt = dynamic_cast<ComponentTransform*>(beachTrans->getCore());
 	ComponentTransformRecPtr zt = dynamic_cast<ComponentTransform*>(trans->getCore());
 
+
 	//bt->setTranslation(Vec3f(10,5,0));
 	//bt->setRotation(Quaternion(Vec3f(1,0,0),osgDegree2Rad(270)+0.001f*time));
 	//bt->setScale(Vec3f(0.001,0.001,0.001));
@@ -329,5 +366,6 @@ int setupGLUT(int *argc, char *argv[]) {
 void cleanup() {
 	beachTrans = NULL;
 	trans = NULL;
+
 	mgr = NULL;
 }
