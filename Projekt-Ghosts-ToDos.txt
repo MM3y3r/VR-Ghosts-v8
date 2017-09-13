@@ -1,0 +1,13 @@
+
+Prio HIGH:
+- Kollision Ghost vs. LightCone
+- Ghost Creation Loop
+- Ghost Movement on Axis
+- Ghost Respawn
+- Player camera separated from scene camera
+
+Prio LOW:
+- Point/Life/Level Controller
+- Lose / Win conditions
+- better models
+- other scene objects (deco)
