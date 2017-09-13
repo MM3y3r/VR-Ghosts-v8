@@ -183,11 +183,11 @@ NodeTransitPtr createScenegraph() {
 	ComponentTransformRecPtr ghostCT = ComponentTransform::create();
 	//ghostCT->setScale(Vec3f(10.f,10.f,10.f));
 
-	//ghostTrans = Node::create();
-	//ghostTrans->setCore(ghostCT);
+	ghostTrans = Node::create();
+	ghostTrans->setCore(ghostCT);
 	
 	//create ghost node in tree
-	NodeRecPtr ghostTrans = makeNodeFor(ghostCT);
+	//NodeRecPtr ghostTrans = makeNodeFor(ghostCT);
 	ghostTrans->addChild(ghostModell);
 
 	//Add our Ghost to the root
@@ -312,8 +312,8 @@ void display() {
 	//ComponentTransformRecPtr zt = dynamic_cast<ComponentTransform*>(trans->getCore());
 
 	// -----------------UNSERE GHOST BEWEGUNG -------------------------
-	//ComponentTransformRecPtr ghostDC = dynamic_cast<ComponentTransform*>(ghostTrans->getCore());
-	//ghostDC->setTranslation(Vec3f(10,5,0.001f*time));
+	ComponentTransformRecPtr ghostDC = dynamic_cast<ComponentTransform*>(ghostTrans->getCore());
+	ghostDC->setTranslation(Vec3f(10,5,0.001f*time));
 
 	//bt->setTranslation(Vec3f(10,5,0));
 	//bt->setRotation(Quaternion(Vec3f(1,0,0),osgDegree2Rad(270)+0.001f*time));
