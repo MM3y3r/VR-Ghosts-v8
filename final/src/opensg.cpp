@@ -176,10 +176,21 @@ NodeTransitPtr createScenegraph() {
 	GeometryRecPtr beachGeo = dynamic_cast<Geometry*>(beach->getCore());
 	beachGeo->setMaterial(tex);
 
+
+	// Ghost Modell & Transform
+	NodeRecPtr ghostModell = SceneFileHandler::the()->read("models/ghost.3ds");
+	ComponentTransformRecPtr ghostCT = ComponentTransform::create();
+	ghostCT->setScale(Vec3f(10.f,10.f,10.f));
+
+	//create ghost node in tree
+	NodeRecPtr ghostTrans = makeNodeFor(ghostCT);
+	ghostTrans->addChild(ghostModell);
+
+	//Add our Ghost to the root
+	root->addChild(ghostTrans);
+
 	//model taken from http://storage3d.com/
 	NodeRecPtr palmTree = SceneFileHandler::the()->read("models/palm.3ds");
-	
-
 	ComponentTransformRecPtr palmCT = ComponentTransform::create();
 	palmCT->setTranslation(Vec3f(12,-1,0));
 	palmCT->setRotation(Quaternion(Vec3f(0,1,0),osgDegree2Rad(45)));
