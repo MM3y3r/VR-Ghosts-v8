@@ -279,8 +279,11 @@ Action::ResultE leave(Node* node, Action::ResultE result){
 	return result;
 }
 int main(int argc, char **argv) {
+
+	// EXAMPLES
 	addToScore(5);
 	removeFromScore(3);
+
 #if WIN32
 	OSG::preloadSharedObject("OSGFileIO");
 	OSG::preloadSharedObject("OSGImageFileIO");
