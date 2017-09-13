@@ -1,7 +1,7 @@
 // Creators : Patrick Nagel & Maximilian Meyer
 
 // file includes
-
+#include "./util/pointController.h"
 
 
 //#define SNIPPET_STEP 7
@@ -279,6 +279,8 @@ Action::ResultE leave(Node* node, Action::ResultE result){
 	return result;
 }
 int main(int argc, char **argv) {
+	addToScore(5);
+	removeFromScore(3);
 #if WIN32
 	OSG::preloadSharedObject("OSGFileIO");
 	OSG::preloadSharedObject("OSGImageFileIO");
