@@ -34,6 +34,7 @@ OSG_USING_NAMESPACE // activate the OpenSG namespace
 SimpleSceneManagerRefPtr mgr; // the SimpleSceneManager to manage applications
 //NodeRecPtr beachTrans;
 NodeRecPtr ghostTrans;
+NodeRecPtr boxTrans;
 //NodeRecPtr trans;
 //NodeRecPtr utrans;
 //const float time = 1000.f * std::clock() / CLOCKS_PER_SEC;
@@ -62,7 +63,7 @@ NodeTransitPtr createScenegraph() {
 	// (Hier wurden zwei Möglichkeiten präsentiert ->	1.makeirgendwas (we create a node containing a geometry core representing a box as well as a node containing a geometry)
 	//													2.makeirgendwasGeo (we create a geometry core defining a sphere and an additional empty node To fill the empty node we have to set the geometry core inside this nodecore representing a plane)
 
-	//NodeRecPtr boxChild = makeBox(5,5,5,1,1,1);		//	1.Node with core 
+	NodeRecPtr boxChild = makeBox(5,5,5,1,1,1);		//	1.Node with core 
 	//NodeRecPtr beach = makePlane(30, 30, 1, 1);
 	//NodeRecPtr ghost = makeSphere(2,3);	Für geist
 
@@ -71,12 +72,13 @@ NodeTransitPtr createScenegraph() {
 	sunChild->setCore(sunGeo);						//	2.placing core in node
 
 	root->addChild(sunChild);						//	Die drei Nodes werden an die Root gebunden
-	//root->addChild(boxChild);
+	root->addChild(boxChild);
 	//root->addChild(beach);
 	//root->addChild(ghost);							//Für geist
 
 	//decouple the nodes to be shifted in hierarchy from the scene
 	root->subChild(sunChild);
+	root->subChild(boxChild);
 	//root->subChild(beach);
 	//root->subChild(ghost);
 
@@ -178,11 +180,23 @@ NodeTransitPtr createScenegraph() {
 	//beachGeo->setMaterial(tex);
 
 
+	//-----------------------------------------------------
+	//KOLLISIONSBOX-TRANSFORMATION
+
+	
+	ComponentTransformRecPtr boxCT = ComponentTransform::create();
+	
+	boxCT->setTranslation(Vec3f(0,-0,20));
+	boxTrans = Node::create();
+	boxTrans->setCore(boxCT);
+	boxTrans->addChild(boxChild);
+	root->addChild(boxTrans);
+	//-----------------------------------------------------
 	// Ghost Modell & Transform
 	NodeRecPtr ghostModell = SceneFileHandler::the()->read("models/ghost.3ds");
 	ComponentTransformRecPtr ghostCT = ComponentTransform::create();
 	//ghostCT->setScale(Vec3f(10.f,10.f,10.f));
-
+	//ghostCT->setTranslation(Vec3f(0,-0,20));
 	ghostTrans = Node::create();
 	ghostTrans->setCore(ghostCT);
 	
@@ -313,7 +327,7 @@ void display() {
 
 	// -----------------UNSERE GHOST BEWEGUNG -------------------------
 	ComponentTransformRecPtr ghostDC = dynamic_cast<ComponentTransform*>(ghostTrans->getCore());
-	ghostDC->setTranslation(Vec3f(10,5,0.001f*time));
+	ghostDC->setTranslation(Vec3f(0,0,0.001f*time));
 
 	//bt->setTranslation(Vec3f(10,5,0));
 	//bt->setRotation(Quaternion(Vec3f(1,0,0),osgDegree2Rad(270)+0.001f*time));
