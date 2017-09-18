@@ -2,6 +2,7 @@
 
 // file includes
 #include "./util/pointController.h"
+#include "./util/AABB.h"
 
 
 //#define SNIPPET_STEP 7
@@ -26,12 +27,20 @@
 #include <OpenSG/OSGPointLight.h>
 #include <OpenSG/OSGSpotLight.h>
 #include <ctime>
+#include <OpenSG/OSGFieldContainerUtils.h> // für debugging
+#include <OpenSG/OSGIntersectAction.h>
+#include <OpenSG/OSGVolumeFunctions.h>
 //test
 #ifdef _MSC_VER
 # pragma warning(pop)
 #endif
 
 OSG_USING_NAMESPACE // activate the OpenSG namespace
+
+
+
+
+
 
 //------------------------------------------------------------------------------
 // Global Variables
@@ -69,6 +78,7 @@ NodeTransitPtr createScenegraph() {
 	//													2.makeirgendwasGeo (we create a geometry core defining a sphere and an additional empty node To fill the empty node we have to set the geometry core inside this nodecore representing a plane)
 
 	NodeRecPtr boxChild = makeBox(5,5,5,1,1,1);		//	1.Node with core 
+	NodeRecPtr boxChild2 = makeBox(5,5,5,1,1,1);
 	//NodeRecPtr beach = makePlane(30, 30, 1, 1);
 	//NodeRecPtr ghost = makeSphere(2,3);	Für geist
 
@@ -78,12 +88,14 @@ NodeTransitPtr createScenegraph() {
 
 	root->addChild(sunChild);						//	Die drei Nodes werden an die Root gebunden
 	root->addChild(boxChild);
+	root->addChild(boxChild2);
 	//root->addChild(beach);
 	//root->addChild(ghost);							//Für geist
 
 	//decouple the nodes to be shifted in hierarchy from the scene
 	root->subChild(sunChild);
 	root->subChild(boxChild);
+	//root->subChild(boxChild2);
 	//root->subChild(beach);
 	//root->subChild(ghost);
 
@@ -188,7 +200,6 @@ NodeTransitPtr createScenegraph() {
 	//-----------------------------------------------------
 	//KOLLISIONSBOX-TRANSFORMATION
 
-	
 	ComponentTransformRecPtr boxCT = ComponentTransform::create();
 	
 	boxCT->setTranslation(Vec3f(0,-0,20));
@@ -197,6 +208,30 @@ NodeTransitPtr createScenegraph() {
 	boxTrans->addChild(boxChild);
 	root->addChild(boxTrans);
 	//-----------------------------------------------------
+
+	//-----------------------------------------------------
+	//Colission detection -versuch
+
+
+	
+	/*Line ray = Line(Pnt3f(0,0,-20), Vec3f(0,0,1));
+	
+	IntersectActionRefPtr test = IntersectAction::create();
+	
+	test->setLine(ray);
+	test->apply(ghostTrans);
+	if (test->didHit())
+	{
+	std::cout << "GETROFFEN";
+	}
+	;*/
+
+
+
+
+	//-----------------------------------------------------
+
+
 	// Ghost Modell & Transform
 	NodeRecPtr ghostModell = SceneFileHandler::the()->read("models/ghost.3ds");
 	ComponentTransformRecPtr ghostCT = ComponentTransform::create();
@@ -205,12 +240,73 @@ NodeTransitPtr createScenegraph() {
 	ghostTrans = Node::create();
 	ghostTrans->setCore(ghostCT);
 	
+	
 	//create ghost node in tree
 	//NodeRecPtr ghostTrans = makeNodeFor(ghostCT);
 	ghostTrans->addChild(ghostModell);
 
 	//Add our Ghost to the root
 	root->addChild(ghostTrans);
+	
+
+	//-----------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+	//-----------------------------------------------------
+	////VERSUCH INTERSECT MIT VOLUME
+	////NodeRecPtr n = Node::create();
+	//const BoxVolume &vol = boxChild->getVolume();
+	//const BoxVolume &volghost = ghostModell->getVolume();
+	//const BoxVolume &testo = BoxVolume(0,0,0,0,0,0);
+
+	//	// this will clear the volume (i.e. contains nothing)
+
+	//
+	//n->invalidateVolume();
+	//vol->setEmpty = true;
+	//
+	//// two points are enough to define the bounding box
+	////makeBox(5,5,5,1,1,1);
+
+	//vol.extendBy(Pnt3f(0,0,0));
+	//vol.extendBy(Pnt3f(100,100,100));
+	////now we have a cube with all edges 100 units long
+
+	////mark it as valid, so it will not be updated with the actual geometry
+	////vol.setValid(true);
+
+	////finally we tell OpenSG to never modify/invalidate this volume
+	////vol.setStatic(true);
+
+
+
+
+	//if (intersect(vol,volghost))
+	//{
+	//std::cout << "GETROFFEN";
+	//}
+	//else
+	//{
+	//std::cout << vol;
+	//std::cout << volghost;
+	//std::cout << testo;
+
+	//}
+	//;
+
+	//-----------------------------------------------------
+
+
+
+
 
 	//model taken from http://storage3d.com/
 	/*NodeRecPtr palmTree = SceneFileHandler::the()->read("models/palm.3ds");
@@ -347,6 +443,11 @@ void display() {
 	//zt->setRotation(Quaternion(Vec3f(1,0,0),osgDegree2Rad(270)+0.005f*time));
 	//zt->setScale(Vec3f(0.001,0.001,0.001));
 	
+
+
+
+
+
 	//updateMesh(time);
 	commitChanges(); //make sure the changes are distributed over the containers
 	mgr->redraw(); // redraw the window
