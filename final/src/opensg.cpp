@@ -25,6 +25,7 @@
 #include <OpenSG/OSGGradientBackground.h>
 #include <OpenSG/OSGPointLight.h>
 #include <OpenSG/OSGSpotLight.h>
+#include <string> 
 #include <ctime>
 //test
 #ifdef _MSC_VER
@@ -40,8 +41,8 @@ SimpleSceneManagerRefPtr mgr; // the SimpleSceneManager to manage applications
 //NodeRecPtr beachTrans;
 NodeRecPtr ghostTrans;
 NodeRecPtr boxTrans;
-//NodeRecPtr trans;
-//NodeRecPtr utrans;
+UInt8 mode = 0; //change the mode of our game
+
 //const float time = 1000.f * std::clock() / CLOCKS_PER_SEC;
 
 
@@ -268,6 +269,8 @@ NodeTransitPtr createScenegraph() {
 	return NodeTransitPtr(root); // We need such a transit pointer to pass the node pointer from the scene graph out of the function to main
 }
 
+//This is the function that will be called when a node
+//is entered during traversal.
 Action::ResultE enter(Node* node){
 	if(node->getCore()->getType().isDerivedFrom(ComponentTransform::getClassType()))
 		std::cout << "Enter node : " << node << std::endl;
@@ -328,6 +331,7 @@ int main(int argc, char **argv) {
 	glutMainLoop();
 }
 
+
 void display() {
 	// definition time
 	const float time = 1000.f * std::clock() / CLOCKS_PER_SEC;
@@ -378,9 +382,15 @@ void keyboard(unsigned char k, int x, int y) {
 		cleanup();
 		exit(0);
 		break;
+		case 'w' : mode = 0; break;
+		case 'a' : mode = 1; break;
+		case 's' : mode = 2; break;
+		case 'd' : mode = 3; break;
 	default:
 		break;
 	}
+	std::string modeString = std::to_string(mode);
+	std::cout << "entering mode: " << modeString + "\n";
 }
 
 int setupGLUT(int *argc, char *argv[]) {
