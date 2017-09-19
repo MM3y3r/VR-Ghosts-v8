@@ -42,6 +42,7 @@ SimpleSceneManagerRefPtr mgr; // the SimpleSceneManager to manage applications
 NodeRecPtr ghostTrans;
 NodeRecPtr boxTrans;
 UInt8 mode = 0; //change the mode of our game
+NodeRecPtr root;
 
 //const float time = 1000.f * std::clock() / CLOCKS_PER_SEC;
 
@@ -274,6 +275,7 @@ NodeTransitPtr createScenegraph() {
 Action::ResultE enter(Node* node){
 	if(node->getCore()->getType().isDerivedFrom(ComponentTransform::getClassType()))
 		std::cout << "Enter node : " << node << std::endl;
+
 	return Action::Continue;
 }
 
@@ -301,7 +303,7 @@ int main(int argc, char **argv) {
 		gwin->setGlutId(winid);
 		gwin->init();
 
-		NodeRecPtr root = createScenegraph();
+		root = createScenegraph();
 
 		traverse(root,enter,leave);
 
@@ -367,6 +369,21 @@ void mouse(int button, int state, int x, int y) {
 		mgr->mouseButtonRelease(button, x, y);
 	} else {
 		mgr->mouseButtonPress(button, x, y);
+	//	Line ray = mgr->calcViewRay(x, y);
+	//	IntersectAction iAct = IntersectAction::create();
+	//	iAct->setLine(ray);
+	//	iAct->apply(root);
+	//	if (iAct->didHit()){
+	//		// get the hit point
+	//		Pnt3f p = iAct->getHitPoint();
+	//		cout << "Hit point : " << p[0] << " " << p[1] << " " << p[2] << endl;
+	//		//and the node that was hit
+	//		NodePtr n = iAct->getHitObject();
+	//		//remove the node from the scene
+	//		NodePtr parent = n->getParent();
+	//		beginEditCP(parent, Node::ChildrenFieldMask);
+	//		parent->subChild(n);
+	//		endEditCP(parent, Node::ChildrenFieldMask);
 	}
 	glutPostRedisplay();
 }
