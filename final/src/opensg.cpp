@@ -4,14 +4,11 @@
 #include "./util/pointController.h"
 #include "./util/AABB.h"
 
-
-//#define SNIPPET_STEP 7
-
 #ifdef _MSC_VER
 # pragma warning(push)
 # pragma warning(disable:4251 4275 4290 4996 4231 4244)
 #endif
-// OpenSG includes
+
 #include <OpenSG/OSGGLUT.h>					//für GLUT
 #include <OpenSG/OSGConfig.h>				//für GLUT
 #include <OpenSG/OSGGLUTWindow.h>			//für GLUT
@@ -50,9 +47,6 @@
 #endif
 
 OSG_USING_NAMESPACE // activate the OpenSG namespace
-
-
-
 
 
 
@@ -159,7 +153,7 @@ NodeTransitPtr createScenegraph() {
 	//-----------------------------------------------------
 	// Ghost Modell & Transform
 	//-----------------------------------------------------
-
+	
 	NodeRecPtr ghostModell = SceneFileHandler::the()->read("models/ghost.3ds");
 	ComponentTransformRecPtr ghostCT = ComponentTransform::create();
 	ghostTrans = Node::create();
@@ -196,89 +190,7 @@ NodeTransitPtr createScenegraph() {
 	{
 	std::cout << "Distanz:" << subTransformPosition.length();
 	std::cout << "box Translation:" << boxCT2->getTranslation();
-
-
 	}
-
-
-
-
-
-
-	//-----------------------------------------------------
-	////VERSUCH INTERSECT MIT VOLUME
-	////NodeRecPtr n = Node::create();
-	//const BoxVolume &vol = boxChild->getVolume();
-	//const BoxVolume &volghost = ghostModell->getVolume();
-	//const BoxVolume &testo = BoxVolume(0,0,0,0,0,0);
-
-	//	// this will clear the volume (i.e. contains nothing)
-
-	//
-	//n->invalidateVolume();
-	//vol->setEmpty = true;
-	//
-	//// two points are enough to define the bounding box
-	////makeBox(5,5,5,1,1,1);
-
-	//vol.extendBy(Pnt3f(0,0,0));
-	//vol.extendBy(Pnt3f(100,100,100));
-	////now we have a cube with all edges 100 units long
-
-	////mark it as valid, so it will not be updated with the actual geometry
-	////vol.setValid(true);
-
-	////finally we tell OpenSG to never modify/invalidate this volume
-	////vol.setStatic(true);
-
-
-
-
-	//if (intersect(vol,volghost))
-	//{
-	//std::cout << "GETROFFEN";
-	//}
-	//else
-	//{
-	//std::cout << vol;
-	//std::cout << volghost;
-	//std::cout << testo;
-
-	//}
-	//;
-
-	//-----------------------------------------------------
-
-
-
-
-
-	//model taken from http://storage3d.com/
-	/*NodeRecPtr palmTree = SceneFileHandler::the()->read("models/palm.3ds");
-	ComponentTransformRecPtr palmCT = ComponentTransform::create();
-	palmCT->setTranslation(Vec3f(12,-1,0));
-	palmCT->setRotation(Quaternion(Vec3f(0,1,0),osgDegree2Rad(45)));
-	palmCT->setScale(Vec3f(10.f,10.f,10.f));
-
-	NodeRecPtr palmTrans = makeNodeFor(palmCT);
-	palmTrans->addChild(palmTree);
-
-	root->addChild(palmTrans);
-
-	NodeRecPtr palmTree2 = OSG::deepCloneTree(palmTrans);
-	ComponentTransformRecPtr palmCT2 = dynamic_cast<ComponentTransform*>(palmTree2->getCore());
-
-	palmCT2->setTranslation(Vec3f(10,-1,5));
-	palmCT->setRotation(Quaternion(Vec3f(1,0,0),osgDegree2Rad(0)));
-	palmCT->setScale(Vec3f(10.f,10.f,10.f));
-
-	NodeRecPtr palmTree3 = OSG::deepCloneTree(palmTrans);
-	ComponentTransformRecPtr palmCT3 = dynamic_cast<ComponentTransform*>(palmTree3->getCore());
-
-	palmCT3->setTranslation(Vec3f(20,-1,5));
-
-	root->addChild(palmTree2);
-	root->addChild(palmTree3);*/
 
 	PointLightRecPtr sunLight = PointLight::create();
 	//sunLight->setAttenuation(1,0,2);
