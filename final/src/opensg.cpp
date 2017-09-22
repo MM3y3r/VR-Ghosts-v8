@@ -32,7 +32,19 @@
 #include <OpenSG/OSGFieldContainerUtils.h> // für debugging
 #include <OpenSG/OSGIntersectAction.h>
 #include <OpenSG/OSGVolumeFunctions.h>
-//test
+#include <iostream>     //for using cout
+#include <stdlib.h>     //for using the function sleep
+#include <stdio.h>
+#include <time.h>
+#include <dos.h>
+
+#ifdef _WIN32
+#include <Windows.h>
+#else
+#include <unistd.h>
+#endif
+
+
 #ifdef _MSC_VER
 # pragma warning(pop)
 #endif
@@ -393,6 +405,7 @@ Action::ResultE leave(Node* node, Action::ResultE result){
 }
 int main(int argc, char **argv) {
 
+
 	// EXAMPLES
 	addToScore(5);
 	removeFromScore(3);
@@ -414,6 +427,7 @@ int main(int argc, char **argv) {
 		root = createScenegraph();
 
 		traverse(root,enter,leave);
+
 
 		mgr = OSG::SimpleSceneManager::create();
 		mgr->setWindow(gwin);			// tell the manager what to manage
@@ -443,6 +457,8 @@ int main(int argc, char **argv) {
 
 
 void display() {
+
+
 	// definition time
 	const float time = 1000.f * std::clock() / CLOCKS_PER_SEC;
 
@@ -460,8 +476,13 @@ void display() {
 	//zt->setTranslation(Vec3f(10,5,0.001f*time));
 	//zt->setRotation(Quaternion(Vec3f(1,0,0),osgDegree2Rad(270)+0.005f*time));
 	//zt->setScale(Vec3f(0.001,0.001,0.001));
-	
 
+	//BASIC LOOP
+	//for (int n=10; n>0; n--) {
+	//	printf( "starting to sleep...\n" );
+	//	Sleep( 3000 );   // sleep three seconds
+	//	printf( "sleep ended\n" );
+	//}
 
 
 
@@ -482,26 +503,29 @@ void mouse(int button, int state, int x, int y) {
 		mgr->mouseButtonRelease(button, x, y);
 	} else {
 		mgr->mouseButtonPress(button, x, y);
+
+		// on mouse button press create ray/line
 		Line ray = mgr->calcViewRay(x, y);
+
+		//create intersection action
 		IntersectActionRefPtr iAct = IntersectAction::create();
-		//ObjTransitPtr act(NULL);
-		//act = new IntersectAction();
-		//IntersectAction *iAct = IntersectAction::create();
 		iAct->setLine(ray);
 		iAct->apply(root);
+
 		if (iAct->didHit()){
 			//std::cout << "Hit Point : "<< iAct->getHitPoint();
+
 			//get the hit point
 			Pnt3f p = iAct->getHitPoint();
-			std::cout << "Hit point : " << p[0] << " " << p[1] << " " << p[2] << std::endl;
+			//std::cout << "Hit point : " << p[0] << " " << p[1] << " " << p[2] << std::endl;
+
 			//and the node that was hit
 			NodeRefPtr n = iAct->getHitObject();
 			//std::cout << "Hit Object : "<< iAct->getHitObject();
-			//remove the node from the scene
+
+			// remove node from scene
 			NodeRefPtr parent = n->getParent();
-			//beginEditCP(parent, Node::ChildrenFieldMask);
 			parent->subChild(n);
-			//endEditCP(parent, Node::ChildrenFieldMask);
 		}
 	}
 	glutPostRedisplay();
