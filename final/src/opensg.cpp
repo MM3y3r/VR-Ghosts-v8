@@ -490,16 +490,17 @@ void mouse(int button, int state, int x, int y) {
 		iAct->setLine(ray);
 		iAct->apply(root);
 		if (iAct->didHit()){
-			std::cout << "Hit Point : "<< iAct->getHitPoint();
-			// get the hit point
-			//Pnt3f p = iAct->getHitPoint();
-			//std::cout << "Hit point : " << p[0] << " " << p[1] << " " << p[2] << std::endl;
-			////and the node that was hit
-			//NodeRefPtr n = iAct->getHitObject();
-			////remove the node from the scene
-			//NodeRefPtr parent = n->getParent();
+			//std::cout << "Hit Point : "<< iAct->getHitPoint();
+			//get the hit point
+			Pnt3f p = iAct->getHitPoint();
+			std::cout << "Hit point : " << p[0] << " " << p[1] << " " << p[2] << std::endl;
+			//and the node that was hit
+			NodeRefPtr n = iAct->getHitObject();
+			//std::cout << "Hit Object : "<< iAct->getHitObject();
+			//remove the node from the scene
+			NodeRefPtr parent = n->getParent();
 			//beginEditCP(parent, Node::ChildrenFieldMask);
-			//parent->subChild(n);
+			parent->subChild(n);
 			//endEditCP(parent, Node::ChildrenFieldMask);
 		}
 	}
