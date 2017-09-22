@@ -50,6 +50,8 @@ SimpleSceneManagerRefPtr mgr; // the SimpleSceneManager to manage applications
 //NodeRecPtr beachTrans;
 NodeRecPtr ghostTrans;
 NodeRecPtr boxTrans;
+NodeRecPtr boxTrans2;
+
 UInt8 mode = 0; //change the mode of our game
 NodeRecPtr root;
 
@@ -97,6 +99,7 @@ NodeTransitPtr createScenegraph() {
 	//decouple the nodes to be shifted in hierarchy from the scene
 	root->subChild(sunChild);
 	root->subChild(boxChild);
+		root->subChild(boxChild2);
 	//root->subChild(boxChild2);
 	//root->subChild(beach);
 	//root->subChild(ghost);
@@ -212,23 +215,9 @@ NodeTransitPtr createScenegraph() {
 	//-----------------------------------------------------
 
 	//-----------------------------------------------------
-	//Colission detection -versuch
-
-
 	
-	/*Line ray = Line(Pnt3f(0,0,-20), Vec3f(0,0,1));
 	
-	IntersectActionRefPtr test = IntersectAction::create();
 	
-	test->setLine(ray);
-	test->apply(ghostTrans);
-	if (test->didHit())
-	{
-	std::cout << "GETROFFEN";
-	}
-	;*/
-
-
 
 
 	//-----------------------------------------------------
@@ -252,10 +241,32 @@ NodeTransitPtr createScenegraph() {
 	
 
 	//-----------------------------------------------------
+	//Colission detection -versuch
+	//857
+	const float time = 1000.f * std::clock() / CLOCKS_PER_SEC; //Zeit
+
+	ComponentTransformRecPtr boxCT2 = ComponentTransform::create(); //Translation für box 2
+	
+	boxCT2->setTranslation(Vec3f(0,0,0.001f*time));
+	boxTrans2 = Node::create();
+	boxTrans2->setCore(boxCT2);
+	boxTrans2->addChild(boxChild2);
+	root->addChild(boxTrans2);
+
+	Vec3f boxTransformPosition = boxCT->getTranslation(); // vektoren für box 1 und 2
+	Vec3f boxTransformPosition2 = boxCT2->getTranslation();
+
+	Vec3f subTransformPosition = boxTransformPosition - boxTransformPosition2; // subtraktion der Vektoren
+	if (subTransformPosition.length() < 10)	// ableich der Länger der subtrahierten Vektoren mit dem kombinierten Wert der beiden Radi(?) der boundingsphere der Boxen (5+5=10).
+	{
+	std::cout << "GETROFFEN";
+	}
+	{
+	std::cout << "Distanz:" << subTransformPosition.length();
+	std::cout << "box Translation:" << boxCT2->getTranslation();
 
 
-
-
+	}
 
 
 
