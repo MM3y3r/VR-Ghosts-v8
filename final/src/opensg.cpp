@@ -61,11 +61,6 @@ OSG_USING_NAMESPACE // activate the OpenSG namespace
 //------------------------------------------------------------------------------
 SimpleSceneManagerRefPtr mgr; // the SimpleSceneManager to manage applications
 NodeRecPtr ghostTrans;
-NodeRecPtr ghostTrans2y;
-NodeRecPtr ghostTrans3y;
-NodeRecPtr ghostTrans4z;
-NodeRecPtr ghostTrans5z;
-
 NodeRecPtr boxTrans;
 NodeRecPtr boxTrans2;
 
