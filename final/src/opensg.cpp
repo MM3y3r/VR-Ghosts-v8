@@ -3,6 +3,7 @@
 // file includes
 #include "./util/pointController.h"
 #include "./util/AABB.h"
+#include "./util/util.h"
 
 #ifdef _MSC_VER
 # pragma warning(push)
