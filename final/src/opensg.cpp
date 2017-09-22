@@ -26,6 +26,7 @@
 #include <OpenSG/OSGGradientBackground.h>
 #include <OpenSG/OSGPointLight.h>
 #include <OpenSG/OSGSpotLight.h>
+#include <OpenSG/OSGTransitPtr.h>
 #include <string> 
 #include <ctime>
 #include <OpenSG/OSGFieldContainerUtils.h> // für debugging
@@ -481,21 +482,26 @@ void mouse(int button, int state, int x, int y) {
 		mgr->mouseButtonRelease(button, x, y);
 	} else {
 		mgr->mouseButtonPress(button, x, y);
-	//	Line ray = mgr->calcViewRay(x, y);
-	//	IntersectAction iAct = IntersectAction::create();
-	//	iAct->setLine(ray);
-	//	iAct->apply(root);
-	//	if (iAct->didHit()){
-	//		// get the hit point
-	//		Pnt3f p = iAct->getHitPoint();
-	//		cout << "Hit point : " << p[0] << " " << p[1] << " " << p[2] << endl;
-	//		//and the node that was hit
-	//		NodePtr n = iAct->getHitObject();
-	//		//remove the node from the scene
-	//		NodePtr parent = n->getParent();
-	//		beginEditCP(parent, Node::ChildrenFieldMask);
-	//		parent->subChild(n);
-	//		endEditCP(parent, Node::ChildrenFieldMask);
+		Line ray = mgr->calcViewRay(x, y);
+		IntersectActionRefPtr iAct = IntersectAction::create();
+		//ObjTransitPtr act(NULL);
+		//act = new IntersectAction();
+		//IntersectAction *iAct = IntersectAction::create();
+		iAct->setLine(ray);
+		iAct->apply(root);
+		if (iAct->didHit()){
+			std::cout << "Hit Point : "<< iAct->getHitPoint();
+			// get the hit point
+			//Pnt3f p = iAct->getHitPoint();
+			//std::cout << "Hit point : " << p[0] << " " << p[1] << " " << p[2] << std::endl;
+			////and the node that was hit
+			//NodeRefPtr n = iAct->getHitObject();
+			////remove the node from the scene
+			//NodeRefPtr parent = n->getParent();
+			//beginEditCP(parent, Node::ChildrenFieldMask);
+			//parent->subChild(n);
+			//endEditCP(parent, Node::ChildrenFieldMask);
+		}
 	}
 	glutPostRedisplay();
 }
