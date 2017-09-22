@@ -60,7 +60,6 @@ OSG_USING_NAMESPACE // activate the OpenSG namespace
 // Global Variables
 //------------------------------------------------------------------------------
 SimpleSceneManagerRefPtr mgr; // the SimpleSceneManager to manage applications
-//NodeRecPtr beachTrans;
 NodeRecPtr ghostTrans;
 NodeRecPtr ghostTrans2y;
 NodeRecPtr ghostTrans3y;
@@ -72,14 +71,12 @@ NodeRecPtr boxTrans2;
 
 UInt8 mode = 0; //change the mode of our game
 NodeRecPtr root;
-
-//const float time = 1000.f * std::clock() / CLOCKS_PER_SEC;
-
+int ghostCount = 0; // counts how many ghosts we have got in the scene
 
 //------------------------------------------------------------------------------
 // Forward Declarations
 //------------------------------------------------------------------------------
-// forward declaration so we can have the interesting parts upfront
+
 int setupGLUT(int *argc, char *argv[]);
 
 // forward declaration to cleanup the used modules and databases
@@ -101,8 +98,6 @@ NodeTransitPtr createScenegraph() {
 
 	NodeRecPtr boxChild = makeBox(5,5,5,1,1,1);		//	1.Node with core 
 	NodeRecPtr boxChild2 = makeBox(5,5,5,1,1,1);
-	//NodeRecPtr beach = makePlane(30, 30, 1, 1);
-	//NodeRecPtr ghost = makeSphere(2,3);	Für geist
 
 	GeometryRecPtr sunGeo = makeSphereGeo(2, 3);	//	2.Only Core (GEO)
 	NodeRecPtr sunChild = Node::create();			//	2.empty node
@@ -110,18 +105,14 @@ NodeTransitPtr createScenegraph() {
 
 	root->addChild(sunChild);						//	Die drei Nodes werden an die Root gebunden
 	root->addChild(boxChild);
-	root->addChild(boxChild2);
-	//root->addChild(beach);
-	//root->addChild(ghost);							//Für geist
+	root->addChild(boxChild2);						
 
 	//decouple the nodes to be shifted in hierarchy from the scene
-	root->subChild(sunChild);
-	root->subChild(boxChild);
-		root->subChild(boxChild2);
-	//root->subChild(boxChild2);
-	//root->subChild(beach);
-	//root->subChild(ghost);
+	root->subChild(sunChild); //remove
+	root->subChild(boxChild); //remove
+	root->subChild(boxChild2); //remove
 
+	//sun transformation
 	TransformRecPtr sunTransCore = Transform::create();
 	Matrix sunMatrix;
 
@@ -133,33 +124,6 @@ NodeTransitPtr createScenegraph() {
 	// Setting up the node
 	NodeRecPtr sunTrans = makeNodeFor(sunTransCore);
 	sunTrans->addChild(sunChild);
-
-	//ComponentTransformRecPtr ct = ComponentTransform::create();
-	//ct->setTranslation(Vec3f(1,2,3));
-	//ct->setRotation(Quaternion(Vec3f(1,0,0),osgDegree2Rad(90)));
-
-	//beachTrans = Node::create();
-	//beachTrans->setCore(ct);
-	//beachTrans->addChild(beach);
-
-	// für die boxchild translation
-	//trans = Node::create();		//knoten erstellt
-	//trans->setCore(ct);			//kern mit ct wird in knoten gesetzt
-	//trans->addChild(boxChild);  //Childknoten wir an den transformationsknoten gehängt
-	
-	// translation zum üben geist
-	
-	//utrans = Node::create();		
-	//utrans->setCore(ct);			
-	//utrans->addChild(ghost);		
-
-	// put the nodes in the scene again
-	//root->addChild(beachTrans);
-
-	//root->addChild(trans); //an den root-knoten wird der trans-knoten gehangen, welcher den CT-Kern ernthält. an den Trans-Knoten wird wiederum der boxchild knoten gehangen, welcher wiederum den geometry-kern enthält(Siehe zeile 63).
-
-	//root->addChild(utrans);//übungstranslationsknoten an welchem geist hängt
-	//root->subChild(utrans);
 
 	root->addChild(sunTrans);
 	root->subChild(sunTrans);
@@ -180,48 +144,9 @@ NodeTransitPtr createScenegraph() {
 
 	root->addChild(sunMg);
 
-	// Probematerial für geist
-
-	//SimpleMaterialRecPtr ghostMat = SimpleMaterial::create();
-	//ghostMat->setDiffuse(Color3f(1,0.8f,0));
-	//ghostMat->setAmbient(Color3f(0.8f, 0.2f, 0.2f));
-
-	//MaterialGroupRecPtr ghostMgCore = MaterialGroup::create();
-	//ghostMgCore->setMaterial(ghostMat);
-
-	//NodeRecPtr ghostMg = Node::create();
-
-	//ghostMg->setCore(ghostMgCore);
-	//ghostMg->addChild(ghost);
-
-
-	//root->addChild(ghostMg);
-
-	// Hier: geometry raus nehmen mit dynamic cast zeile 149
-	/*SimpleMaterialRecPtr boxMat = SimpleMaterial::create();
-
-	boxMat->setDiffuse(Color3f(1,0.2f,0.1f));
-	boxMat->setAmbient(Color3f(0.8f, 0.2f, 0.2f));
-	boxMat->setTransparency(0.25);*/
-	//boxMat->setLit(false);
-
-	//GeometryRecPtr boxGeo = dynamic_cast<Geometry*>(boxChild->getCore());
-	//boxGeo->setMaterial(boxMat);
-	//ImageRecPtr image = Image::create();
-	// sand taken from http://www.filterforge.com/filters/720.jpg
-	//image->read("models/sand.jpg");
-
-	//now we create the texture that will hold the image
-	//SimpleTexturedMaterialRecPtr tex = SimpleTexturedMaterial::create();
-	//tex->setImage(image);
-
-	//now assign the fresh texture to the geometry
-	//GeometryRecPtr beachGeo = dynamic_cast<Geometry*>(beach->getCore());
-	//beachGeo->setMaterial(tex);
-
-
 	//-----------------------------------------------------
-	//KOLLISIONSBOX-TRANSFORMATION
+	//KOLLISIONSBOX-TRANSFORMATION (evtl. deprecated)
+	//-----------------------------------------------------
 
 	ComponentTransformRecPtr boxCT = ComponentTransform::create();
 	
@@ -230,37 +155,26 @@ NodeTransitPtr createScenegraph() {
 	boxTrans->setCore(boxCT);
 	boxTrans->addChild(boxChild);
 	root->addChild(boxTrans);
-	//-----------------------------------------------------
 
 	//-----------------------------------------------------
-	
-	
-	
-
-
-	//-----------------------------------------------------
-
-
 	// Ghost Modell & Transform
+	//-----------------------------------------------------
+
 	NodeRecPtr ghostModell = SceneFileHandler::the()->read("models/ghost.3ds");
 	ComponentTransformRecPtr ghostCT = ComponentTransform::create();
-	//ghostCT->setScale(Vec3f(10.f,10.f,10.f));
-	//ghostCT->setTranslation(Vec3f(0,-0,20));
 	ghostTrans = Node::create();
 	ghostTrans->setCore(ghostCT);
 	
-	
 	//create ghost node in tree
-	//NodeRecPtr ghostTrans = makeNodeFor(ghostCT);
 	ghostTrans->addChild(ghostModell);
 
 	//Add our Ghost to the root
 	root->addChild(ghostTrans);
 	
-
 	//-----------------------------------------------------
 	//Colission detection -versuch
-	//857
+	//-----------------------------------------------------
+
 	const float time = 1000.f * std::clock() / CLOCKS_PER_SEC; //Zeit
 
 	ComponentTransformRecPtr boxCT2 = ComponentTransform::create(); //Translation für box 2
