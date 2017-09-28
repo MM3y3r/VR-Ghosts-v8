@@ -295,7 +295,27 @@ void display() {
 	// -----------------UNSERE GHOST BEWEGUNG -------------------------
 	ComponentTransformRecPtr ghostDC = dynamic_cast<ComponentTransform*>(ghostTrans->getCore());
 	ghostDC->setTranslation(Vec3f(0,0,0.001f*time));
-
+    
+    
+    // ----------------- GHOST SINUS BEWEGUNG -------------------------
+    // update the object's position based on its velocity:
+    // pos += velocity;
+    
+    // adjust the velocity by adding or subtracting a fixed value
+    //   we'll call this value 'foobar' because I'm too lazy to come up
+    //   with a better name.
+    //
+    // 'centerline' is the Y position which will be the center point of the
+    //   sine wave
+    
+    /* TODO:
+     if( pos.y < centerline )
+        velocity.y += foobar;
+    else
+        velocity.y -= foobar;
+     */
+    // ----------------- END GHOST SINUS BEWEGUNG -------------------------
+    
 	//bt->setTranslation(Vec3f(10,5,0));
 	//bt->setRotation(Quaternion(Vec3f(1,0,0),osgDegree2Rad(270)+0.001f*time));
 	//bt->setScale(Vec3f(0.001,0.001,0.001));
