@@ -89,7 +89,7 @@ NodeTransitPtr ghostFactory(OSG::Time startTime){
 	static NodeRecPtr ghostModell = SceneFileHandler::the()->read("./models/KingBoo.obj");
 	ComponentTransformRecPtr ghostCT = ComponentTransform::create();
 
-	//randome bestimmen auf welcher wand der geist gespawned wird und entsprechend ghosCT zuweiﬂen.
+	//randome bestimmen auf welcher wand der geist gespawned wird und entsprechend ghosCT zuwei√üen.
 
 	for (auto &ghost : ghosts) {
 
@@ -287,7 +287,7 @@ void setupGLUT(int *argc, char *argv[])
 		for (auto &ghost : ghosts) {
 			const auto time = timeSinceStart - ghost.startTime;
 
-			//If abfrage auf welcher wand gespawnt -> entsprechende translation zuweiﬂen
+			//If abfrage auf welcher wand gespawnt -> entsprechende translation zuwei√üen
 			switch (ghost.id % 4)
 			{
 				case (0):
