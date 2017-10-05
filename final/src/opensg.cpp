@@ -119,7 +119,7 @@ NodeRecPtr heartFactory(int heartId){
 	heartMaterial = SimpleMaterial::create();
 	heartMaterial->setDiffuse(Color3f(1,0,0));
 	heartMaterial->setAmbient(Color3f(0.2,0.2,0.2));
-	heartMaterial->setTransparency(0.0);
+	heartMaterial->setTransparency(0.5);
 	
 	// Material Node
 	MaterialGroupRecPtr heartMatGroup = MaterialGroup::create();
@@ -155,7 +155,7 @@ NodeTransitPtr createScenegraph() {
 	// (Hier wurden zwei Möglichkeiten präsentiert ->	1.makeirgendwas (we create a node containing a geometry core representing a box as well as a node containing a geometry)
 	//													2.makeirgendwasGeo (we create a geometry core defining a sphere and an additional empty node To fill the empty node we have to set the geometry core inside this nodecore representing a plane)
 
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < 28; i++)
 	{
 		root->addChild(heartFactory(i));
 	}
@@ -388,32 +388,92 @@ void display() {
 
 	for (auto &heart : hearts) {
 		switch(heart.first.heartId){
+			// heart lvl 1
 			case (1):
 				heart.first.trans->setTranslation(Vec3f(0,0,0));
 				break;
+			// heart lvl 2
 			case (2):
 				heart.first.trans->setTranslation(Vec3f(-1,1,0));
 				break;
 			case (3):
-				heart.first.trans->setTranslation(Vec3f(1,1,0));
+				heart.first.trans->setTranslation(Vec3f(0,1,0));
 				break;
 			case (4):
-				heart.first.trans->setTranslation(Vec3f(-1,2,0));
+				heart.first.trans->setTranslation(Vec3f(1,1,0));
 				break;
+			// heart lvl 3
 			case (5):
-				heart.first.trans->setTranslation(Vec3f(0,3,1));
+				heart.first.trans->setTranslation(Vec3f(-2,2,0));
 				break;
 			case (6):
-				heart.first.trans->setTranslation(Vec3f(-1,3,1));
+				heart.first.trans->setTranslation(Vec3f(-1,2,0));
 				break;
 			case (7):
-				heart.first.trans->setTranslation(Vec3f(-2,3,1));
+				heart.first.trans->setTranslation(Vec3f(0,2,0));
 				break;
 			case (8):
-				heart.first.trans->setTranslation(Vec3f(1,3,1));
+				heart.first.trans->setTranslation(Vec3f(1,2,0));
 				break;
 			case (9):
-				heart.first.trans->setTranslation(Vec3f(2,3,1));
+				heart.first.trans->setTranslation(Vec3f(2,2,0));
+				break;
+			// heart lvl 4
+			case (10):
+				heart.first.trans->setTranslation(Vec3f(-3,3,0));
+				break;
+			case (11):
+				heart.first.trans->setTranslation(Vec3f(-2,3,0));
+				break;
+			case (12):
+				heart.first.trans->setTranslation(Vec3f(-1,3,0));
+				break;
+			case (13):
+				heart.first.trans->setTranslation(Vec3f(0,3,0));
+				break;
+			case (14):
+				heart.first.trans->setTranslation(Vec3f(1,3,0));
+				break;
+			case (15):
+				heart.first.trans->setTranslation(Vec3f(2,3,0));
+				break;
+			case (16):
+				heart.first.trans->setTranslation(Vec3f(3,3,0));
+				break;
+			// heart lvl 5
+			case (17):
+				heart.first.trans->setTranslation(Vec3f(-3,4,0));
+				break;
+			case (18):
+				heart.first.trans->setTranslation(Vec3f(-2,4,0));
+				break;
+			case (19):
+				heart.first.trans->setTranslation(Vec3f(-1,4,0));
+				break;
+			case (20):
+				heart.first.trans->setTranslation(Vec3f(0,4,0));
+				break;
+			case (21):
+				heart.first.trans->setTranslation(Vec3f(1,4,0));
+				break;
+			case (22):
+				heart.first.trans->setTranslation(Vec3f(2,4,0));
+				break;
+			case (23):
+				heart.first.trans->setTranslation(Vec3f(3,4,0));
+				break;
+			// heart lvl 6 (TOP)
+			case (24):
+				heart.first.trans->setTranslation(Vec3f(-2,5,0));
+				break;
+			case (25):
+				heart.first.trans->setTranslation(Vec3f(-1,5,0));
+				break;
+			case (26):
+				heart.first.trans->setTranslation(Vec3f(1,5,0));
+				break;
+			case (27):
+				heart.first.trans->setTranslation(Vec3f(2,5,0));
 				break;
 		}
 		
