@@ -1,4 +1,4 @@
-// Creators : Patrick Nagel & Maximilian Meyer
+ï»¿// Creators : Patrick Nagel & Maximilian Meyer
 
 // file includes
 #include "./util/pointController.h"
@@ -10,10 +10,10 @@
 # pragma warning(disable:4251 4275 4290 4996 4231 4244)
 #endif
 
-#include <OpenSG/OSGGLUT.h>					//für GLUT
-#include <OpenSG/OSGConfig.h>				//für GLUT
-#include <OpenSG/OSGGLUTWindow.h>			//für GLUT
-#include <OpenSG/OSGSimpleSceneManager.h>	//für GLUT
+#include <OpenSG/OSGGLUT.h>					//fÃ¼r GLUT
+#include <OpenSG/OSGConfig.h>				//fÃ¼r GLUT
+#include <OpenSG/OSGGLUTWindow.h>			//fÃ¼r GLUT
+#include <OpenSG/OSGSimpleSceneManager.h>	//fÃ¼r GLUT
 #include <OpenSG/OSGSimpleGeometry.h>
 #include <OpenSG/OSGComponentTransform.h>
 #include <OpenSG/OSGMaterialGroup.h>
@@ -27,7 +27,7 @@
 #include <OpenSG/OSGTransitPtr.h>
 #include <string> 
 #include <ctime>
-#include <OpenSG/OSGFieldContainerUtils.h> // für debugging
+#include <OpenSG/OSGFieldContainerUtils.h> // fÃ¼r debugging
 #include <OpenSG/OSGIntersectAction.h>
 #include <OpenSG/OSGVolumeFunctions.h>
 #include <iostream>     //for using cout
@@ -56,8 +56,18 @@ OSG_USING_NAMESPACE // activate the OpenSG namespace
 //------------------------------------------------------------------------------
 SimpleSceneManagerRefPtr mgr; // the SimpleSceneManager to manage applications
 NodeRecPtr ghostTrans;
-NodeRecPtr boxTrans;
-NodeRecPtr boxTrans2;
+ComponentTransformRecPtr heartTransCore;
+NodeRecPtr heartTrans;
+NodeRecPtr heartTrans1;
+NodeRecPtr heartTrans2;
+NodeRecPtr heartTrans3;
+NodeRecPtr heartTrans4;
+
+NodeRecPtr MatGroupNode;
+
+static int heartCounter = 0;
+SimpleMaterialRecPtr heartMaterial;
+
 
 UInt8 mode = 0; //change the mode of our game
 NodeRecPtr root;
@@ -72,35 +82,148 @@ int setupGLUT(int *argc, char *argv[]);
 // forward declaration to cleanup the used modules and databases
 void cleanup();
 
+class Heart {
+
+	static int nextId() 
+	{
+		static int lastId = 0;
+		return ++lastId;
+	}
+
+public:
+	//int direction;
+	int heartId;
+	const ComponentTransformRecPtr trans;
+
+	Heart(const ComponentTransformRecPtr trans, int heartId)
+		: heartId(nextId()), trans(trans) {
+	}
+	
+	ComponentTransformRecPtr getTrans(){
+		return this->trans;
+	}
+	//NodeTransitPtr setTransitPointer(NodeTransitPtr transitPointer){
+	//	this->ghostTrans = transitPointer;
+	//}
+};
+
+std::vector<std::pair<Heart,NodeRecPtr> > hearts;
+
+
+NodeRecPtr heartFactory(int heartId){
+	
+	static NodeRecPtr heartModell = makeBox(1,1,1,1,1,1);
+	heartTransCore = ComponentTransform :: create();
+	
+	// Material for the heart
+	heartMaterial = SimpleMaterial::create();
+	heartMaterial->setDiffuse(Color3f(1,0,0));
+	heartMaterial->setAmbient(Color3f(0.2,0.2,0.2));
+	heartMaterial->setTransparency(0.0);
+	
+	// Material Node
+	MaterialGroupRecPtr heartMatGroup = MaterialGroup::create();
+	heartMatGroup->setMaterial(heartMaterial);
+	MatGroupNode = Node::create();
+	MatGroupNode->setCore(heartMatGroup);
+
+	ComponentTransformRecPtr heartCT = ComponentTransform::create();
+	NodeRecPtr heartTrans = makeNodeFor(heartCT);
+
+	// deepCloning the heart pixelÃ¶
+	heartTrans->addChild(OSG::deepCloneTree(heartModell));
+	MatGroupNode->addChild(heartTrans);
+	heartTrans->setCore(heartTransCore);
+
+	hearts.push_back(std::pair<Heart,NodeRecPtr>(Heart(heartTransCore,heartId),MatGroupNode));
+	//ghosts.push_back(std::pair<Ghost,NodeRecPtr>(Ghost(ghostCT,startTime,ghostCounter),ghostTrans));
+
+	return NodeRecPtr(MatGroupNode); // in transit gepackt
+}
+
 NodeTransitPtr createScenegraph() {
 	// CREATE ROOT SCENE GRAPH
 	NodeRecPtr root = Node::create(); //Generation of objects via create() generates the object internally and returns a pointer to the object (RecPtr)
 	root->setCore(Group::create()); // A first node with a group core is created - this is achieved by creating an anonymous group core and setting it in the node
 
-	//• NodeRecPtr		-> General smart pointer used to create a node
-	//• NodeTransitPtr	-> Used for passing a node pointer out of the current context, typically used when a field container is created inside a function and should be returned
-	//• commitChanges	-> Commit the changes before rendering, fields become synchronise over all rendering nodes
-	//• Attachment		-> Field containers can have attachments (user data) Typically available with nodes and node cores Attachments have to be derived from the class attachment
+	//â€¢ NodeRecPtr		-> General smart pointer used to create a node
+	//â€¢ NodeTransitPtr	-> Used for passing a node pointer out of the current context, typically used when a field container is created inside a function and should be returned
+	//â€¢ commitChanges	-> Commit the changes before rendering, fields become synchronise over all rendering nodes
+	//â€¢ Attachment		-> Field containers can have attachments (user data) Typically available with nodes and node cores Attachments have to be derived from the class attachment
 
 	// CREATE SCENE BOX 
-	// (Hier wurden zwei Möglichkeiten präsentiert ->	1.makeirgendwas (we create a node containing a geometry core representing a box as well as a node containing a geometry)
+	// (Hier wurden zwei MÃ¶glichkeiten prÃ¤sentiert ->	1.makeirgendwas (we create a node containing a geometry core representing a box as well as a node containing a geometry)
 	//													2.makeirgendwasGeo (we create a geometry core defining a sphere and an additional empty node To fill the empty node we have to set the geometry core inside this nodecore representing a plane)
 
-	NodeRecPtr boxChild = makeBox(5,5,5,1,1,1);		//	1.Node with core 
-	NodeRecPtr boxChild2 = makeBox(5,5,5,1,1,1);
+	for (int i = 0; i < 10; i++)
+	{
+		root->addChild(heartFactory(i));
+	}
+
+
+	//heartTrans1 = Node::create();
+	//heartTrans2 = Node::create();
+	//heartTrans3 = Node::create();
+	//heartTrans4 = Node::create();
+	//heartTransCore = Transform :: create();
+	//
+	//NodeRecPtr heart1 = makeBox(1,1,1,1,1,1);
+	//NodeRecPtr heart2 = makeBox(1,1,1,1,1,1);
+	//NodeRecPtr heart3 = makeBox(1,1,1,1,1,1);
+	//NodeRecPtr heart4 = makeBox(1,1,1,1,1,1);
+	//root->addChild(heart1);
+	//root->addChild(heart2);
+	//root->addChild(heart3);
+	//root->addChild(heart4);
+
+	//// Material for the heart
+	//heartMaterial = SimpleMaterial::create();
+	//heartMaterial->setDiffuse(Color3f(1,0,0));
+	//heartMaterial->setAmbient(Color3f(0.2,0.2,0.2));
+	//heartMaterial->setTransparency(0.5);
+
+	//MaterialGroupRecPtr heartMatGroup = MaterialGroup::create();
+	//heartMatGroup->setMaterial(heartMaterial);
+	//NodeRecPtr MatGroupNode = Node::create();
+	//MatGroupNode->setCore(heartMatGroup);
+
+	//MatGroupNode->addChild(heartTrans1);
+	//MatGroupNode->addChild(heartTrans2);
+	//MatGroupNode->addChild(heartTrans3);
+	//MatGroupNode->addChild(heartTrans4);
+	//heartTrans1->setCore(heartTransCore);
+	//heartTrans2->setCore(heartTransCore);
+	//heartTrans3->setCore(heartTransCore);
+	//heartTrans4->setCore(heartTransCore);
+
+
+	//heartTrans1->addChild(heart1);
+	//heartTrans2->addChild(heart2);
+	//heartTrans3->addChild(heart3);
+	//heartTrans4->addChild(heart4);
+
+	//MatGroupNode->addChild(heartTrans1);
+	//MatGroupNode->addChild(heartTrans2);
+	//MatGroupNode->addChild(heartTrans3);
+	//MatGroupNode->addChild(heartTrans4);
+
+
+	//root->addChild(MatGroupNode);
+
+
+	//NodeRecPtr boxChild2 = makeBox(5,5,5,1,1,1);
 
 	GeometryRecPtr sunGeo = makeSphereGeo(2, 3);	//	2.Only Core (GEO)
 	NodeRecPtr sunChild = Node::create();			//	2.empty node
 	sunChild->setCore(sunGeo);						//	2.placing core in node
 
 	root->addChild(sunChild);						//	Die drei Nodes werden an die Root gebunden
-	root->addChild(boxChild);
-	root->addChild(boxChild2);						
+	
+	//root->addChild(boxChild2);						
 
 	//decouple the nodes to be shifted in hierarchy from the scene
 	root->subChild(sunChild); //remove
-	root->subChild(boxChild); //remove
-	root->subChild(boxChild2); //remove
+
 
 	//sun transformation
 	TransformRecPtr sunTransCore = Transform::create();
@@ -138,13 +261,9 @@ NodeTransitPtr createScenegraph() {
 	//KOLLISIONSBOX-TRANSFORMATION (evtl. deprecated)
 	//-----------------------------------------------------
 
-	ComponentTransformRecPtr boxCT = ComponentTransform::create();
+
 	
-	boxCT->setTranslation(Vec3f(0,-0,20));
-	boxTrans = Node::create();
-	boxTrans->setCore(boxCT);
-	boxTrans->addChild(boxChild);
-	root->addChild(boxTrans);
+
 
 	//-----------------------------------------------------
 	// Ghost Modell & Transform
@@ -165,28 +284,8 @@ NodeTransitPtr createScenegraph() {
 	//Colission detection -versuch
 	//-----------------------------------------------------
 
-	const float time = 1000.f * std::clock() / CLOCKS_PER_SEC; //Zeit
+	const float time = 1000.f * std::clock() / CLOCKS_PER_SEC; 
 
-	ComponentTransformRecPtr boxCT2 = ComponentTransform::create(); //Translation für box 2
-	
-	boxCT2->setTranslation(Vec3f(0,0,0.001f*time));
-	boxTrans2 = Node::create();
-	boxTrans2->setCore(boxCT2);
-	boxTrans2->addChild(boxChild2);
-	root->addChild(boxTrans2);
-
-	Vec3f boxTransformPosition = boxCT->getTranslation(); // vektoren für box 1 und 2
-	Vec3f boxTransformPosition2 = boxCT2->getTranslation();
-
-	Vec3f subTransformPosition = boxTransformPosition - boxTransformPosition2; // subtraktion der Vektoren
-	if (subTransformPosition.length() < 10)	// ableich der Länger der subtrahierten Vektoren mit dem kombinierten Wert der beiden Radi(?) der boundingsphere der Boxen (5+5=10).
-	{
-	std::cout << "GETROFFEN";
-	}
-	{
-	std::cout << "Distanz:" << subTransformPosition.length();
-	std::cout << "box Translation:" << boxCT2->getTranslation();
-	}
 
 	PointLightRecPtr sunLight = PointLight::create();
 	//sunLight->setAttenuation(1,0,2);
@@ -285,9 +384,43 @@ int main(int argc, char **argv) {
 
 void display() {
 
+	const float time = 1000.f * std::clock() / CLOCKS_PER_SEC;
+
+	for (auto &heart : hearts) {
+		switch(heart.first.heartId){
+			case (1):
+				heart.first.trans->setTranslation(Vec3f(0,0,0));
+				break;
+			case (2):
+				heart.first.trans->setTranslation(Vec3f(-1,1,0));
+				break;
+			case (3):
+				heart.first.trans->setTranslation(Vec3f(1,1,0));
+				break;
+			case (4):
+				heart.first.trans->setTranslation(Vec3f(-1,2,0));
+				break;
+			case (5):
+				heart.first.trans->setTranslation(Vec3f(0,3,1));
+				break;
+			case (6):
+				heart.first.trans->setTranslation(Vec3f(-1,3,1));
+				break;
+			case (7):
+				heart.first.trans->setTranslation(Vec3f(-2,3,1));
+				break;
+			case (8):
+				heart.first.trans->setTranslation(Vec3f(1,3,1));
+				break;
+			case (9):
+				heart.first.trans->setTranslation(Vec3f(2,3,1));
+				break;
+		}
+		
+	}
 
 	// definition time
-	const float time = 1000.f * std::clock() / CLOCKS_PER_SEC;
+
 
 	//ComponentTransformRecPtr bt = dynamic_cast<ComponentTransform*>(beachTrans->getCore());
 	//ComponentTransformRecPtr zt = dynamic_cast<ComponentTransform*>(trans->getCore());
@@ -296,7 +429,15 @@ void display() {
 	ComponentTransformRecPtr ghostDC = dynamic_cast<ComponentTransform*>(ghostTrans->getCore());
 	ghostDC->setTranslation(Vec3f(0,0,0.001f*time));
     
-    
+	//ComponentTransformRecPtr heartDC1 = dynamic_cast<ComponentTransform*>(heartTrans1->getCore());
+	//ComponentTransformRecPtr heartDC2 = dynamic_cast<ComponentTransform*>(heartTrans2->getCore());
+	//ComponentTransformRecPtr heartDC3 = dynamic_cast<ComponentTransform*>(heartTrans3->getCore());
+	//ComponentTransformRecPtr heartDC4 = dynamic_cast<ComponentTransform*>(heartTrans4->getCore());
+	//heartDC1->setTranslation(Vec3f(0,0,0));
+	//heartDC2->setTranslation(Vec3f(1,1,0));
+	//heartDC3->setTranslation(Vec3f(-1,1,0));
+	//heartDC4->setTranslation(Vec3f(0,2,0));
+
     // ----------------- GHOST SINUS BEWEGUNG -------------------------
     // update the object's position based on its velocity:
     // pos += velocity;
@@ -424,5 +565,6 @@ void cleanup() {
 	//beachTrans = NULL;
 	//trans = NULL;
 	ghostTrans = NULL;
+	heartTrans1= NULL;
 	mgr = NULL;
 }
