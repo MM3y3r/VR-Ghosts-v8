@@ -31,7 +31,8 @@
 #include <OpenSG/OSGSceneFileHandler.h>
 
 #include <OpenSG/OSGIntersectAction.h>
-#include <OpenSG/OSGComponentTransformBase.h>
+#include <OpenSG/OSGComponentTransform.h>
+#include <OpenSG/OSGSpotLight.h>
 #include <string>
 
 using namespace std;
@@ -40,7 +41,15 @@ using namespace std;
 // Global Variables
 //------------------------------------------------------------------------------
 
+static float z = 10; // für ghostspawntime
+static float t = 0.0; //für Transparency
+static OSG::Time nextGhostSpawnTime = 10;
+static float o = 1;//transcone
+static int h = 0;
 
+
+//static OSG::Time startTimeTransparency = 0;
+//OSG::Time startTimeTransparency = OSG::getSystemTime();
 #define _USE_MATH_DEFINES
 
 OSG_USING_NAMESPACE
@@ -61,7 +70,39 @@ TransformRecPtr coneTransCore;
 
 
 NodeRecPtr flashLightCone;
+NodeRecPtr env;
+
+NodeRecPtr Sky;
+NodeRecPtr ruin;
+ComponentTransformRecPtr ruinCore;
+
+
 SimpleMaterialRecPtr flashLightMaterial;
+
+NodeTransitPtr wandNode;
+
+
+
+
+ComponentTransformRecPtr heartTransCore;
+NodeRecPtr heartTrans;
+NodeRecPtr heartTrans1;
+NodeRecPtr heartTrans2;
+NodeRecPtr heartTrans3;
+NodeRecPtr heartTrans4;
+
+NodeRecPtr MatGroupNode;
+
+static int heartCounter = 0;
+SimpleMaterialRecPtr heartMaterial;
+
+
+UInt8 mode = 0; //change the mode of our game
+
+
+
+
+
 
 
 
@@ -78,9 +119,105 @@ void cleanup()
 	delete tracker;
 	delete button;
 	delete analog;
+	wandNode = NULL;
+	heartTrans1 = NULL; 
 }
 
 void print_tracker();
+
+
+
+
+
+
+
+
+
+//------------------------------------------------------------------------------
+// Hearth Class with functionality
+//------------------------------------------------------------------------------
+
+
+
+
+class Heart {
+
+	static int nextId() 
+	{
+		static int lastId = 0;
+		return ++lastId;
+	}
+
+public:
+	//int direction;
+	int heartId;
+	const ComponentTransformRecPtr trans;
+
+	Heart(const ComponentTransformRecPtr trans, int heartId)
+		: heartId(nextId()), trans(trans) {
+	}
+	
+	ComponentTransformRecPtr getTrans(){
+		return this->trans;
+	}
+	//NodeTransitPtr setTransitPointer(NodeTransitPtr transitPointer){
+	//	this->ghostTrans = transitPointer;
+	//}
+};
+
+std::vector<std::pair<Heart,NodeRecPtr> > hearts;
+
+
+NodeRecPtr heartFactory(int heartId){
+	
+	static NodeRecPtr heartModell = makeBox(1,1,1,1,1,1);
+	heartTransCore = ComponentTransform :: create();
+	
+	// Material for the heart
+	heartMaterial = SimpleMaterial::create();
+	heartMaterial->setDiffuse(Color3f(1,0,0));
+	heartMaterial->setAmbient(Color3f(0.2,0.2,0.2));
+	heartMaterial->setTransparency(0.5);
+	
+	// Material Node
+	MaterialGroupRecPtr heartMatGroup = MaterialGroup::create();
+	heartMatGroup->setMaterial(heartMaterial);
+	MatGroupNode = Node::create();
+	MatGroupNode->setCore(heartMatGroup);
+
+	ComponentTransformRecPtr heartCT = ComponentTransform::create();
+	NodeRecPtr heartTrans = makeNodeFor(heartCT);
+
+	// deepCloning the heart pixelö
+	heartTrans->addChild(OSG::deepCloneTree(heartModell));
+	MatGroupNode->addChild(heartTrans);
+	heartTrans->setCore(heartTransCore);
+
+	hearts.push_back(std::pair<Heart,NodeRecPtr>(Heart(heartTransCore,heartId),MatGroupNode));
+	//ghosts.push_back(std::pair<Ghost,NodeRecPtr>(Ghost(ghostCT,startTime,ghostCounter),ghostTrans));
+
+	return NodeRecPtr(MatGroupNode); // in transit gepackt
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 //------------------------------------------------------------------------------
 // Ghost Class with functionality
@@ -103,13 +240,9 @@ public:
 	Ghost(const ComponentTransformRecPtr trans, OSG::Time startTime, int ghostId)
 		: ghostId(nextId()), trans(trans), startTime(startTime) {
 	}
-	
 	ComponentTransformRecPtr getTrans(){
 		return this->trans;
 	}
-	//NodeTransitPtr setTransitPointer(NodeTransitPtr transitPointer){
-	//	this->ghostTrans = transitPointer;
-	//}
 };
 
 std::vector<std::pair<Ghost,NodeRecPtr> > ghosts; // habe auf NodeRecprt ge�ndert f�r die second funktion
@@ -117,17 +250,6 @@ std::vector<std::pair<Ghost,NodeRecPtr> > ghosts; // habe auf NodeRecprt ge�nd
 //------------------------------------------------------------------------------
 // Ghost Factory
 //------------------------------------------------------------------------------
-
-//int nextId() {
-//	++ghostCounter;
-//	//std::cout << "ghostCounter @countup : " << ghostCounter << '\n';
-//	return ghostCounter;
-//};
-//
-//void countUp(){
-//	ghostCounter = ghostCounter+1;
-//	//std::cout << "ghostCounter @countup : "<< ghostCounter << '\n';
-//}
 
 NodeTransitPtr ghostFactory(OSG::Time startTime){
 
@@ -159,9 +281,63 @@ NodeTransitPtr ghostFactory(OSG::Time startTime){
 
 NodeTransitPtr buildScene()
 {
+
+
+
+//------------------------------------------------------------------------------
+// SPOTLIGHT
+//------------------------------------------------------------------------------
+	SpotLightRecPtr sLight = SpotLight::create();
+	NodeRecPtr sLightBeacon = Node::create();
+	ComponentTransformRecPtr sLightBeaconCore = ComponentTransform::create();
+
+	//set how fast light intesity decreases at the border
+	sLight->setSpotExponent(0);
+	NodeRecPtr sLightNode = Node::create();//makeNodeFor(sLight);
+
+	/*DirectionalLightRecPtr dirlight = DirectionalLight::create();
+	dirlight->setDirection(Vec3f(.5f, .25f, -.5f));
+	dirlight->setDiffuse (Color4f(1,   1,   1,   1));
+	dirlight->setAmbient (Color4f(0.2, 0.2, 0.2, 1));
+	dirlight->setSpecular(Color4f(1,   1,   1,   1));*/
+	//sLightNode->setCore(dirlight);
+
+	sLightNode->setCore(sLight);
+
+	//set the opening angle
+	sLight->setSpotCutOff(30);// geändert
+
+	//color information
+	sLight->setDiffuse (Color4f(1,   1,   1,   1));
+	sLight->setAmbient (Color4f(0.2, 0.2, 0.2, 1));
+	sLight->setSpecular(Color4f(1,   1,   1,   1));
+
+	sLight->setAttenuation(0.1f,0.f,0.00001f);
+
+	//set the beacon
+	sLight->setBeacon(sLightBeacon);
+	sLightBeacon->setCore(sLightBeaconCore);
+
+
+
+	
+	wandNode = (NodeTransitPtr)sLightBeacon;
+
+	
+
+	//add to root
+	
+
+//------------------------------------------------------------------------------
+// FLASHLIGHT & GHOST
+//------------------------------------------------------------------------------
+
 	root = makeNodeFor(Group::create());
+
+	sLightNode->addChild(root);
 	//Add our Ghost to the root
 	root->addChild(ghostFactory(0));
+
 
 	coneTrans = Node::create();
 	coneTransCore = Transform :: create();
@@ -170,39 +346,56 @@ NodeTransitPtr buildScene()
 	flashLightMaterial = SimpleMaterial::create();
 	flashLightMaterial->setDiffuse(Color3f(1,1,0));
 	flashLightMaterial->setAmbient(Color3f(0.2,0.2,0.2));
-	flashLightMaterial->setTransparency(0.5);
+	flashLightMaterial->setTransparency(0.0);
 
 	MaterialGroupRecPtr coneMatGroup = MaterialGroup::create();
 	coneMatGroup->setMaterial(flashLightMaterial);
 	NodeRecPtr MatGroupNode = Node::create();
 	MatGroupNode->setCore(coneMatGroup);
 	MatGroupNode->addChild(coneTrans);
-
 	coneTrans->setCore(coneTransCore);
 
 	flashLightCone = SceneFileHandler::the()->read("./models/cone.obj");
-	//flashLightCone = makeCylinder(1000,1,4,true,true,true);
-	//const CylinderVolume &vol = flashLightCone->getVolume(false);
-	//makeBox(20,20,20,10,10,10);
-
-		//vol.setEmpty();
-	//flashLightCone->invalidateVolume();
-
-	//coneTrans->addChild(falsLightMaterial);
-
 	coneTrans->addChild(flashLightCone);
+
 	MatGroupNode->addChild(coneTrans);
 
 	root->addChild(MatGroupNode);
 
-	return NodeTransitPtr(root);
+
+
+	// Die Skybox und der Graveyard
+	Sky = SceneFileHandler::the()->read("./models/skybox_sphere_hiPoly.obj");
+
+	root->addChild(Sky);
+
+	env = SceneFileHandler::the()->read("./models/graveyard.obj");
+	/*std::cout << "0\n";
+	GeometryRecPtr geo = dynamic_cast<Geometry *>(env->getCore());
+	std::cout << "1\n";
+	MaterialRecPtr mat = dynamic_cast<Material *>(geo->getMaterial());
+	std::cout <<"2\n";*/
+	//mat->setAmbient(Color3f(0,0,0));
+	//mat->setAmbient(Color3f(.1f, .1f, .1f));
+	root->addChild(env);
+
+
+
+	for (int i = 0; i < 28; i++)
+	{
+		root->addChild(heartFactory(i));
+	}
+
+
+	sLightNode->addChild(sLightBeacon);
+	return NodeTransitPtr(sLightNode);
 }
 
 //------------------------------------------------------------------------------
 // Tracker and Wand --- TODO: Wand = Flashlight
 //------------------------------------------------------------------------------
 
-//template<typename T>
+template<typename T>
 T scale_tracker2cm(const T& value)
 {
 	static const float scale = OSGCSM::convert_length(cfg.getUnits(), 1.f, OSGCSM::CAVEConfig::CAVEUnitCentimeters);
@@ -224,13 +417,13 @@ auto wand_position = Vec3f();
 Matrix4f wandRotationMat;
 Matrix4f wandHitMat;
 
-Matrix4f rotMat = Matrix(1,0,0,0,0,cos(90),-sin(90),0,0,sin(90),cos(90),0,0,0,0,1); // für cone
+Matrix4f rotMat = Matrix(1,0,0,0,0,cos(osgDegree2Rad(90)),-sin(osgDegree2Rad(90)),0,0,sin(90),cos(osgDegree2Rad(90)),0,0,0,0,1); // für JA DIE 90 die vorher drin waren waren falsch weil sie keine Rad waren ZEFIX
 
 void VRPN_CALLBACK callback_wand_tracker(void* userData, const vrpn_TRACKERCB tracker)
 {
 	wand_orientation = Quaternion(tracker.quat[0], tracker.quat[1], tracker.quat[2], tracker.quat[3]);
 	wand_orientation_flashLight = Quaternion(tracker.quat[0] + osgDegree2Rad(90), tracker.quat[1], tracker.quat[2], tracker.quat[3]);
-	wand_position = Vec3f(Vec3d(tracker.pos));
+	wand_position = Vec3f(scale_tracker2cm(Vec3d(tracker.pos)));
 	//std::cout << " quat 0 : "<< tracker.quat[0] << '\n';
 	
 }
@@ -267,10 +460,12 @@ void VRPN_CALLBACK callback_button(void* userData, const vrpn_BUTTONCB button)
 
 
 		Vec3f tempChekPoint(0,0,0);
+		int i = 0;
 		int count = 0;
 		int maxCount = 1000;
 		while (count < maxCount)
 		{
+
 			count++; // AHHHHHH WICHTIG
 			////int lineDirInt = lineDir.normalize;
 			//
@@ -303,10 +498,23 @@ void VRPN_CALLBACK callback_button(void* userData, const vrpn_BUTTONCB button)
 
 				if (betrag.length() < 15)
 				{
-					//root->subChild(ghost.second);
-					std::cout << "Hit: " << '\n';
+					if (z>0.5 && i == 0) //fuer ghostspawntime
+					{
+					z = z-0.3;
+					i = 1;
+					std::cout << "Z->" << z <<'\n';
+
+
+					/*flashLightMaterial->setTransparency(t);
+					t += 0.1;
+					std::cout << "tranparency!" << flashLightMaterial->getTransparency() <<'\n';*/
+					}
+					
+					root->subChild(ghost.second);
+					//std::cout << "HIT!" << '\n';
 					break;
 				}
+
 			};
 			
 		}
@@ -418,9 +626,12 @@ void keyboard(unsigned char k, int x, int y)
 			print_tracker();
 			break;
 		case 't':
-			test.normalize();
 			
-			std::cout << "following head: " << test*2 << '\n';
+			
+			z = z-0.3;; //fuer ghostspawntime
+			std::cout << "z = z--; " << z << '\n';
+			std::cout << "spawntime " << nextGhostSpawnTime << '\n';
+			break;
 		break;
 		default:
 			std::cout << "Key '" << k << "' ignored\n";
@@ -435,12 +646,258 @@ void keyboard(unsigned char k, int x, int y)
 
 void setupGLUT(int *argc, char *argv[])
 {
+
 	glutInit(argc, argv);
 	glutInitDisplayMode(GLUT_RGB  |GLUT_DEPTH | GLUT_DOUBLE);
 	glutCreateWindow("OpenSG CSMDemo with VRPN API");
 	glutDisplayFunc([]()
 	{
 
+
+
+
+
+		//(0.f, 170.f, 200.f)
+		//30,180,100
+		const float time = 1000.f * std::clock() / CLOCKS_PER_SEC;
+
+		for (auto &heart : hearts) {
+		switch(heart.first.heartId){
+			// heart lvl 1
+			case (1):
+				heart.first.trans->setTranslation(Vec3f(80,220,-100));
+			if(h>=1)
+			{
+				root->subChild(heart.second);
+			}
+				break;
+			// heart lvl 2
+			case (2):
+				heart.first.trans->setTranslation(Vec3f(79,221,-100));
+			if(h>=1)
+			{
+				root->subChild(heart.second);
+			}
+				break;
+			case (3):
+				heart.first.trans->setTranslation(Vec3f(80,221,-100));
+			if(h>=1)
+			{
+				root->subChild(heart.second);
+			}
+				break;
+			case (4):
+				heart.first.trans->setTranslation(Vec3f(81,221,-100));
+			if(h>=1)
+			{
+				root->subChild(heart.second);
+			}
+				break;
+				break;
+			// heart lvl 3
+			case (5):
+				heart.first.trans->setTranslation(Vec3f(78,222,-100));
+			if(h>=2)
+			{
+				root->subChild(heart.second);
+			}
+				break;
+				break;
+			case (6):
+				heart.first.trans->setTranslation(Vec3f(79,222,-100));
+			if(h>=2)
+			{
+				root->subChild(heart.second);
+			}
+				break;
+				break;
+			case (7):
+				heart.first.trans->setTranslation(Vec3f(80,222,-100));
+			if(h>=2)
+			{
+				root->subChild(heart.second);
+			}
+				break;
+				break;
+			case (8):
+				heart.first.trans->setTranslation(Vec3f(81,222,-100));
+			if(h>=2)
+			{
+				root->subChild(heart.second);
+			}
+				break;
+				break;
+			case (9):
+				heart.first.trans->setTranslation(Vec3f(82,222,-100));
+			if(h>=2)
+			{
+				root->subChild(heart.second);
+			}
+				break;
+				break;
+			// heart lvl 4
+			case (10):
+				heart.first.trans->setTranslation(Vec3f(77,223,-100));
+			if(h>=2)
+			{
+				root->subChild(heart.second);
+			}
+				break;
+				break;
+			case (11):
+				heart.first.trans->setTranslation(Vec3f(78,223,-100));
+			if(h>=2)
+			{
+				root->subChild(heart.second);
+			}
+				break;
+				break;
+			case (12):
+				heart.first.trans->setTranslation(Vec3f(79,223,-100));
+			if(h>=2)
+			{
+				root->subChild(heart.second);
+			}
+				break;
+				break;
+			case (13):
+				heart.first.trans->setTranslation(Vec3f(80,223,-100));
+			if(h>=2)
+			{
+				root->subChild(heart.second);
+			}
+				break;
+				break;
+			case (14):
+				heart.first.trans->setTranslation(Vec3f(81,223,-100));
+			if(h>=2)
+			{
+				root->subChild(heart.second);
+			}
+				break;
+				break;
+			case (15):
+				heart.first.trans->setTranslation(Vec3f(82,223,-100));
+			if(h>=2)
+			{
+				root->subChild(heart.second);
+			}
+				break;
+				break;
+			case (16):
+				heart.first.trans->setTranslation(Vec3f(83,223,-100));
+				if(h>=2)
+				{
+					root->subChild(heart.second);
+				}
+					break;
+			// heart lvl 5
+			case (17):
+				heart.first.trans->setTranslation(Vec3f(77,224,-100));
+			if(h>=1)
+			{
+				root->subChild(heart.second);
+			}
+				break;
+			case (18):
+				heart.first.trans->setTranslation(Vec3f(78,224,-100));
+			if(h>=1)
+			{
+				root->subChild(heart.second);
+			}
+				break;
+			case (19):
+				heart.first.trans->setTranslation(Vec3f(79,224,-100));
+			if(h>=1)
+			{
+				root->subChild(heart.second);
+			}
+				break;
+			case (20):
+				heart.first.trans->setTranslation(Vec3f(80,224,-100));
+			if(h>=1)
+			{
+				root->subChild(heart.second);
+			}
+				break;
+			case (21):
+				heart.first.trans->setTranslation(Vec3f(81,224,-100));
+			if(h>=1)
+			{
+				root->subChild(heart.second);
+			}
+				break;
+			case (22):
+				heart.first.trans->setTranslation(Vec3f(82,224,-100));
+			if(h>=1)
+			{
+				root->subChild(heart.second);
+			}
+				break;
+			case (23):
+				heart.first.trans->setTranslation(Vec3f(83,224,-100));
+			if(h>=1)
+			{
+				root->subChild(heart.second);
+			}
+				break;
+			// heart lvl 6 (TOP)
+			case (24):
+				heart.first.trans->setTranslation(Vec3f(78,225,-100));
+			if(h>=1)
+			{
+				root->subChild(heart.second);
+			}
+				break;
+			case (25):
+				heart.first.trans->setTranslation(Vec3f(79,225,-100));
+			if(h>=1)
+			{
+				root->subChild(heart.second);
+			}
+				break;
+			case (26):
+				heart.first.trans->setTranslation(Vec3f(81,225,-100));
+			if(h>=1)
+			{
+				root->subChild(heart.second);
+			}
+				break;
+			case (27):
+				heart.first.trans->setTranslation(Vec3f(82,225,-100));
+				if(h>=1)
+				{
+					root->subChild(heart.second);
+				}
+				break;
+		}
+		
+	}
+
+
+
+
+		//WAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAND
+		
+
+		ComponentTransformRecPtr wandTrans = dynamic_cast<ComponentTransform *>(wandNode->getCore()); // brauche ich nochmal um die diffuse vom lught auf null zu setzen auf knopfdruck
+		wandTrans->setTranslation(wand_position);
+		wandTrans->setRotation(wand_orientation);
+
+
+
+		int timeTrans = glutGet(GLUT_ELAPSED_TIME);
+		//std::cout << "tranparency!" << timeTrans <<'\n';
+
+		if  ((timeTrans / 10000 ) == o  && flashLightMaterial->getTransparency() <= 0.8) // Zeitabhägige Transparency vom Flashlight
+		{
+		o += 1;
+		std::cout << "TIME!!" << timeTrans <<'\n';
+		flashLightMaterial->setTransparency(t += 0.1);
+		std::cout << "tranparency!" << flashLightMaterial->getTransparency() <<'\n';
+		
+		}
+		
 		// ----------------- WAND HANDLING -------------------------------------------
 
 		wandRotationMat.setTransform(wand_orientation);
@@ -449,6 +906,7 @@ void setupGLUT(int *argc, char *argv[])
 		wandRotationMat.setTranslate(wand_position);
 		wandHitMat.setTranslate(wand_position);
 		coneTransCore->setMatrix(wandRotationMat);
+		//coneTransCore->setRotation(wand_orientation);
 		// ---------------------------------------------------------------------------
 
 		// black navigation window
@@ -480,15 +938,21 @@ void setupGLUT(int *argc, char *argv[])
 		//mgr->setTranslation(mgr->getTranslation() + speed * analog_values);
 
 		// ----------------- GHOST MOVEMENT --------------------------------------------
-		static OSG::Time nextGhostSpawnTime = 10;
+		
 		if (timeSinceStart > nextGhostSpawnTime) {
 			root->addChild(ghostFactory(timeSinceStart));
-			nextGhostSpawnTime += 10;
+
+			nextGhostSpawnTime += z;
+			
 		}
 
 		//std::cout << "before the loop " << '\n';
 
 		for (auto &ghost : ghosts) {
+
+
+			
+
 			const auto time = timeSinceStart - ghost.first.startTime;
 			//std::cout << "forschleife \n " << ghost.first.getTrans() << '\n';
 			//std::cout << "Ghost ID in der vorschleife  \n" << ghost.first.ghostId << '\n';
@@ -502,6 +966,7 @@ void setupGLUT(int *argc, char *argv[])
 					//std::cout << "case 0 : " << ghost.first.ghostId % 4 << '\n';
 					if(-250 + time * ghostSpeed > 0 && -250 + time * ghostSpeed < 1){
 						root->subChild(ghost.second);
+						h +=1;
 					}
 					break;
 				// LINKS
@@ -515,6 +980,7 @@ void setupGLUT(int *argc, char *argv[])
 					if(-250 + time * ghostSpeed > 0 && -250 + time * ghostSpeed < 1)
 					{
 						root->subChild(ghost.second);
+						h +=1;
 					}
 					break;
 				// RECHTS
@@ -525,7 +991,7 @@ void setupGLUT(int *argc, char *argv[])
 					if(-250 + time * ghostSpeed > 0 && -250 + time * ghostSpeed < 1)
 					{
 					root->subChild(ghost.second);
-			
+					h +=1;
 					}
 					break;
 				// OBEN
@@ -536,6 +1002,7 @@ void setupGLUT(int *argc, char *argv[])
 					if(-380 + time * ghostSpeed > 0 && -380 + time * ghostSpeed < 1) // 450-170
 					{
 						root->subChild(ghost.second);
+						h +=1;
 					}
 					break;
 			};
@@ -631,19 +1098,21 @@ int main(int argc, char **argv)
 		mgr->setRoot(scene);
 		mgr->showAll();
 
-		//Background for each wall
-		ImageRecPtr backimage = Image::create();
-		backimage->read("models/mansion1.jpg");
-		TextureObjChunkRecPtr bkgTex = TextureObjChunk::create();
-		bkgTex->setImage(backimage);
-		bkgTex->setScale(false);
-		TextureBackgroundRecPtr imBkg = TextureBackground::create();
-		imBkg->setTexture(bkgTex);
-		imBkg->setColor(Color4f(1.0,1.0,1.0,0.0f));
-		for (int i = 0; i < cfg.getNumActiveWalls(); i++)
-		{
-			mgr->setBackground(i, imBkg);
-		}
+		mgr->setHeadlight(false); // fum generell das bestehende headlight aus zu stellen
+
+		////Background for each wall
+		//ImageRecPtr backimage = Image::create();
+		//backimage->read("models/mansion1.jpg");
+		//TextureObjChunkRecPtr bkgTex = TextureObjChunk::create();
+		//bkgTex->setImage(backimage);
+		//bkgTex->setScale(false);
+		//TextureBackgroundRecPtr imBkg = TextureBackground::create();
+		//imBkg->setTexture(bkgTex);
+		//imBkg->setColor(Color4f(1.0,1.0,1.0,0.0f));
+		//for (int i = 0; i < cfg.getNumActiveWalls(); i++)
+		//{
+		//	mgr->setBackground(i, imBkg);
+		//}
 
 		mgr->getWindow()->init();
 		mgr->turnWandOff();
